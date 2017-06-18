@@ -1,0 +1,5755 @@
+CCS PCM C Compiler, Version 4.068, 42663               12-Dec-13 20:39
+
+               Filename: PCB_PIC.lst
+
+               ROM used: 4026 words (98%)
+                         Largest free fragment is 65
+               RAM used: 114 (45%) at main() level
+                         145 (57%) worst case
+               Stack:    8 worst case (5 in main + 3 for interrupts)
+
+*
+0000:  MOVLW  08
+0001:  MOVWF  0A
+0002:  GOTO   2C3
+0003:  NOP
+0004:  MOVWF  7F
+0005:  SWAPF  03,W
+0006:  CLRF   03
+0007:  MOVWF  26
+0008:  MOVF   7F,W
+0009:  MOVWF  25
+000A:  MOVF   0A,W
+000B:  MOVWF  2D
+000C:  CLRF   0A
+000D:  SWAPF  25,F
+000E:  MOVF   04,W
+000F:  MOVWF  27
+0010:  MOVF   20,W
+0011:  MOVWF  28
+0012:  MOVF   21,W
+0013:  MOVWF  29
+0014:  MOVF   22,W
+0015:  MOVWF  2A
+0016:  MOVF   23,W
+0017:  MOVWF  2B
+0018:  MOVF   24,W
+0019:  MOVWF  2C
+001A:  BCF    03.7
+001B:  BCF    03.5
+001C:  BTFSS  0B.5
+001D:  GOTO   020
+001E:  BTFSC  0B.2
+001F:  GOTO   043
+0020:  BTFSS  0B.3
+0021:  GOTO   024
+0022:  BTFSC  0B.0
+0023:  GOTO   045
+0024:  MOVLW  8C
+0025:  MOVWF  04
+0026:  BTFSS  00.6
+0027:  GOTO   02A
+0028:  BTFSC  0C.6
+0029:  GOTO   047
+002A:  MOVLW  8C
+002B:  MOVWF  04
+002C:  BTFSS  00.1
+002D:  GOTO   030
+002E:  BTFSC  0C.1
+002F:  GOTO   049
+0030:  MOVF   27,W
+0031:  MOVWF  04
+0032:  MOVF   28,W
+0033:  MOVWF  20
+0034:  MOVF   29,W
+0035:  MOVWF  21
+0036:  MOVF   2A,W
+0037:  MOVWF  22
+0038:  MOVF   2B,W
+0039:  MOVWF  23
+003A:  MOVF   2C,W
+003B:  MOVWF  24
+003C:  MOVF   2D,W
+003D:  MOVWF  0A
+003E:  SWAPF  26,W
+003F:  MOVWF  03
+0040:  SWAPF  7F,F
+0041:  SWAPF  7F,W
+0042:  RETFIE
+0043:  BCF    0A.3
+0044:  GOTO   12E
+0045:  BCF    0A.3
+0046:  GOTO   29D
+0047:  BCF    0A.3
+0048:  GOTO   122
+0049:  BCF    0A.3
+004A:  GOTO   2B2
+.................... #include "PCB_PIC.h" 
+.................... #include <16F690.h> 
+.................... //////// Standard Header file for the PIC16F690 device //////////////// 
+.................... #device PIC16F690 
+.................... #list 
+....................  
+.................... #include <stddef.h> 
+.................... /////////////////////////////////////////////////////////////////////////// 
+.................... ////        (C) Copyright 1996,2003 Custom Computer Services           //// 
+.................... //// This source code may only be used by licensed users of the CCS C  //// 
+.................... //// compiler.  This source code may only be distributed to other      //// 
+.................... //// licensed users of the CCS C compiler.  No other use, reproduction //// 
+.................... //// or distribution is permitted without written permission.          //// 
+.................... //// Derivative programs created using this software in object code    //// 
+.................... //// form are not restricted in any way.                               //// 
+.................... /////////////////////////////////////////////////////////////////////////// 
+....................  
+.................... #ifndef _STDDEF 
+....................  
+.................... #define _STDDEF 
+....................  
+.................... #if sizeof(unsigned int8 *)==1 
+.................... #define ptrdiff_t unsigned int8 
+.................... #else 
+.................... #define ptrdiff_t unsigned int16 
+.................... #endif 
+....................  
+.................... #define size_t unsigned int8 
+.................... #define wchar_t char 
+.................... #define NULL 0 
+....................  
+.................... #define offsetof(s,f) (offsetofbit(s,f)/8) 
+....................  
+.................... #endif 
+....................  
+....................  
+.................... #define NOOP		0 
+.................... #define MORSE_ECHO	1 
+.................... #define SET_AUXOUT1	2 
+.................... #define SET_AUXOUT2	3 
+.................... #define ENABLE_REPEATER	4 
+.................... #define ENABLE_RADIO1	5 
+.................... #define ENABLE_RADIO2	6 
+.................... #define ENABLE_RADIO3	7 
+.................... #define TX_MORSE_ID     8 
+.................... #define MCHAR(c)	c-'a'+10 
+.................... #define AUX_DELAY_S(c) c*1831/60 
+.................... // WAIT/NOWAIT are used for morseStart function 
+.................... // When WAIT is specified, morse will only begin 
+.................... // after COR_IN falls or after a specified delay 
+.................... // has expired. 
+.................... #define WAIT 1 
+.................... #define NOWAIT 0 
+....................  
+.................... #include "SITE_08.h" 
+....................  
+.................... #define SITE_ID_VAL 	8 
+.................... #define SITE_GID_VAL 	90 
+.................... #define POLARITY_DEF_VAL 0x00 
+....................  
+.................... #define USER_FCT1_REG	58 
+.................... #define USER_FCT1_OP	NOOP 
+.................... #define USER_FCT2_REG	59 
+.................... #define USER_FCT2_OP	NOOP 
+.................... #define USER_FCT3_REG	60 
+.................... #define USER_FCT3_OP	NOOP 
+.................... #define USER_FCT4_REG	61 
+.................... #define USER_FCT4_OP	NOOP 
+.................... #define ENABLE_MORSE_ID_TX 2 
+....................  
+....................  
+.................... #define AUXINA_OP	NOOP 
+.................... #define AUXINB_OP	NOOP 
+....................  
+.................... #define LINK_TIMEOUT    0 
+.................... #define PTT_TIMEOUT     8 
+.................... #define MAX_COR_PER_MINUTE 99 
+....................  
+.................... #define MORSEID0	MCHAR('v') 
+.................... #define MORSEID1	MCHAR('e') 
+.................... #define MORSEID2	2 
+.................... #define MORSEID3	MCHAR('r') 
+.................... #define MORSEID4	MCHAR('b') 
+.................... #define MORSEID5	MCHAR('l') 
+....................  
+....................  
+.................... //#define CCP_PWM_MODE 0x00 
+.................... //#define CCP_PWM_HH   0x0C 
+.................... //#byte CCP1CON = 0x17 
+....................  
+.................... // Preprocessor variables {{{ 
+.................... #define CMD_MODE_TIMEOUT 2*1831 // 1 minute  
+.................... #define DTMFSeqSize 	14 
+.................... #define DTMFArgPtr  	5 
+.................... #define PTT_PWM_USER_DELAY 2000 // 1.25s  
+.................... #define PTT_PWM_BEGIN_DELAY 550 
+.................... #define PTT_PWM_END_DELAY 	900 
+....................  
+.................... #define AUX_OUT_REG	64 
+.................... #define TEMP_REG	65 
+.................... #define COR_PER_SEC_REG 66 
+.................... #define TX_MORSE_ID_FLAG 70 
+.................... // The TIMER2 is spending 252 instructions between two calls to set_pwm_duty. 
+.................... // At 8MHz, this corresponds to 31.5us. 
+.................... // Two PWM periods corresponds to 126us. 
+.................... // This means the TIMER2 interrupt accounts for 25% of the time spent during 
+.................... // the PWM output is generated. 
+.................... #define TIMER2_DELAY_FACTOR 1/6 // Based on experimentation with trace.  
+.................... // 1/6 gives a delay of 0.01ms per unit... 
+.................... //#define TIMER2_DELAY_FACTOR 1/3 --> This one works really great! 
+.................... #define DAH_DURATION_RATIO 3 
+.................... #define MORSE_MULTIPLIER_ISR_ON 10 * TIMER2_DELAY_FACTOR 
+.................... #define MORSE_MULTIPLIER_ISR_OFF 10  
+.................... #define SITE_ID_TX_DELAY 30 
+.................... #define MORSE_WORD_DELAY morse_word_delay() 
+.................... //#define MORSE_WORD_DELAY delay_ms(DitDelay * 7 * MorseMultiplier) 
+....................  
+.................... // }}} 
+....................  
+.................... // SITE_ID and SITE_GID parameter values {{{ 
+....................  
+.................... #define PWM_DEFAULT_AMPLITUDE 2 // 4 = Full amplitude. 
+....................  
+.................... // }}} 
+....................  
+.................... #device ADC=10 
+.................... #fuses INTRC 
+.................... #fuses NOPROTECT 
+.................... #fuses BROWNOUT 
+.................... #fuses NOMCLR 
+.................... #fuses NOCPD 
+.................... #fuses NOWDT // WDT controlled by sw 
+.................... #fuses NOPUT 
+.................... #fuses NOFCMEN 
+.................... #fuses NOIESO 
+.................... #case 
+....................  
+.................... #use delay(internal=8M,restart_wdt) 
+*
+05EF:  MOVLW  C8
+05F0:  MOVWF  04
+05F1:  BCF    03.7
+05F2:  MOVF   00,W
+05F3:  BTFSC  03.2
+05F4:  GOTO   606
+05F5:  MOVLW  02
+05F6:  MOVWF  21
+05F7:  MOVLW  BF
+05F8:  MOVWF  20
+05F9:  CLRWDT
+05FA:  DECFSZ 20,F
+05FB:  GOTO   5F9
+05FC:  DECFSZ 21,F
+05FD:  GOTO   5F7
+05FE:  MOVLW  96
+05FF:  MOVWF  20
+0600:  DECFSZ 20,F
+0601:  GOTO   600
+0602:  GOTO   603
+0603:  CLRWDT
+0604:  DECFSZ 00,F
+0605:  GOTO   5F5
+0606:  RETLW  00
+.................... //#use delay(clock=8000000,internal,restart_wdt) 
+.................... //#use delay(internal=8MHZ,restart_wdt) 
+....................  
+.................... #use fast_io(A) 
+.................... #use fast_io(B) 
+.................... #use fast_io(C) 
+....................  
+.................... // Declare EEPROM register locations {{{ 
+....................  
+.................... #define GET_RAM_PTR(id) 	Offset_##id 
+.................... #define GET_EEPROM_PTR(id)	Offset_##id 
+.................... #define GET_DEFAULT_VAL(id)  	DefaultValue_##id 
+.................... #define GET_REG_SIZE(id)	RegSize_##id 
+....................  
+.................... const int8 RegCnt = 0; 
+....................  
+.................... #define REG_DEFINE_ARRAY(name,dv,size) \ 
+.................... 	int8 name[size]; \ 
+.................... 	const int8 Offset_##name = RegCnt; \ 
+.................... 	const int8 DefaultValue_##name = dv ; \ 
+.................... 	const int8 RCT = RegCnt; \ 
+.................... 	#undef RegCnt \ 
+.................... 	const int8 RegCnt = (RCT + size); \ 
+.................... 	#undef RCT 
+....................  
+.................... //	const int8 RegSize_##name = size; \ 
+....................  
+.................... #define REG_DEFINE(name,dv,size) \ 
+.................... 	int8 name; \ 
+.................... 	const int8 Offset_##name = RegCnt; \ 
+.................... 	const int8 DefaultValue_##name = dv ; \ 
+.................... 	const int8 RCT = RegCnt; \ 
+.................... 	#undef RegCnt \ 
+.................... 	const int8 RegCnt = (RCT + size); \ 
+.................... 	#undef RCT  
+....................  
+.................... //	const int8 RegSize_##name = size; \ 
+.................... 	 
+.................... #define SET_DEF_VAL(name,dv) \ 
+.................... 	const int8 DefaultValue_##name = dv; 
+....................  
+.................... #define BASE_PTR &AdminPwd[0] 
+....................  
+....................  
+....................  
+.................... // 
+.................... // Register name		     DefaultValue 	        Size     // Reg   EEPtr 
+.................... REG_DEFINE_ARRAY(AdminPwd    , 0x01                  , 8     ) // 1     0 
+.................... SET_DEF_VAL(AdminPwd1        , 0x22                          ) // 1     1 
+.................... SET_DEF_VAL(AdminPwd2        , 0x00                          ) // 1     2 
+.................... SET_DEF_VAL(AdminPwd3        , 0x00                          ) // 1     3 
+.................... SET_DEF_VAL(AdminPwd4        , 0x00                          ) // 1     4 
+.................... SET_DEF_VAL(AdminPwd5        , 0x00                          ) // 1     5 
+.................... SET_DEF_VAL(AdminPwd6        , 0x00                          ) // 1     6 
+.................... SET_DEF_VAL(AdminPwd7        , 0x00                          ) // 1     7 
+.................... REG_DEFINE(Enable            , 0x03                  , 1     ) // 1     8 
+.................... REG_DEFINE(Polarity          , POLARITY_DEF_VAL      , 1     ) // 2     9 
+.................... REG_DEFINE(RX0PTT            , 0x02                  , 1     ) // 3     A 
+.................... REG_DEFINE(RX1PTT            , 0x03                  , 1     ) // 4     B 
+.................... REG_DEFINE(RX2PTT            , 0x00                  , 1     ) // 5     C 
+.................... REG_DEFINE(PWMPTT            , 0x03                  , 1     ) // 6     D 
+.................... REG_DEFINE(DitDelay          , 6                     , 1     ) // 7     E 
+.................... REG_DEFINE(LinkTimeout       , LINK_TIMEOUT          , 1     ) // 8     F 
+.................... REG_DEFINE(TempLowOp         , 0x00                  , 1     ) // 9     10 
+.................... REG_DEFINE(TempHighOp        , 0x00                  , 1     ) // 10    11 
+.................... REG_DEFINE(TempNormOp        , 0x00                  , 1     ) // 11    12 
+.................... REG_DEFINE(AuxInAOp          , AUXINA_OP             , 1     ) // 12    13 
+.................... REG_DEFINE(AuxInBOp          , AUXINB_OP             , 1     ) // 13    14 
+.................... REG_DEFINE(PUAuxOutValue     , 0x00                  , 1     ) // 14    15 
+.................... REG_DEFINE(SiteID            , SITE_ID_VAL           , 1     ) // 15    16 
+.................... REG_DEFINE(MaxCorPerMinute   , MAX_COR_PER_MINUTE    , 1     ) // 16    17 
+.................... REG_DEFINE_ARRAY(SiteIDMorse , MORSEID0              , 6     ) // 17 V  18 
+.................... SET_DEF_VAL(SiteIDMorse1     , MORSEID1                      ) // 18 E  19 
+.................... SET_DEF_VAL(SiteIDMorse2     , MORSEID2                      ) // 19 2  1A 
+.................... SET_DEF_VAL(SiteIDMorse3     , MORSEID3                      ) // 20 R  1B 
+.................... SET_DEF_VAL(SiteIDMorse4     , MORSEID4                      ) // 21 E  1C 
+.................... SET_DEF_VAL(SiteIDMorse5     , MORSEID5                      ) // 22 H  1D 
+.................... REG_DEFINE(TempLow           , 50                    , 1     ) // 23    1E (10degC)  
+.................... REG_DEFINE(TempHigh          , 68                    , 1     ) // 24    1F (28degC)  
+.................... // AuxCfg  Aux2  	Aux1 
+.................... // -------------------------- 
+.................... // 00	   Output	Output  
+.................... // 01	   Output	Input 
+.................... // 10	   Input	Output 
+.................... // 11	   Input	Input 
+.................... REG_DEFINE(AuxCfg            , 0x01                  , 1     ) // 25    20 
+.................... REG_DEFINE(EnableMorseIDTx   , ENABLE_MORSE_ID_TX    , 1     ) // 26    21 
+.................... REG_DEFINE(EnableSiteIDTx    , 0x00                  , 1     ) // 27    22 
+.................... REG_DEFINE(PWMAmplitude      , PWM_DEFAULT_AMPLITUDE , 1     ) // 28    23 
+.................... REG_DEFINE(UserFunction1Reg  , USER_FCT1_REG         , 1     ) // 29    24 
+.................... REG_DEFINE(UserFunction1Op   , USER_FCT1_OP          , 1     ) // 30    25 
+.................... REG_DEFINE(UserFunction2Reg  , USER_FCT2_REG         , 1     ) // 31    26 
+.................... REG_DEFINE(UserFunction2Op   , USER_FCT2_OP          , 1     ) // 32    27 
+.................... REG_DEFINE(UserFunction3Reg  , USER_FCT3_REG         , 1     ) // 33    28 
+.................... REG_DEFINE(UserFunction3Op   , USER_FCT3_OP          , 1     ) // 34    29 
+.................... REG_DEFINE(UserFunction4Reg  , USER_FCT4_REG         , 1     ) // 35    2A 
+.................... REG_DEFINE(UserFunction4Op   , USER_FCT4_OP          , 1     ) // 36    2B 
+.................... REG_DEFINE(PTTTimeout        , PTT_TIMEOUT           , 1     ) // 37    2C 
+.................... REG_DEFINE(EEPROM_VALID      , 0xA5                  , 1     ) // 38    2D 
+....................  
+.................... // End of test. }}} 
+....................  
+.................... typedef short bit; 
+....................  
+.................... // Specifying the AddressMod type for EEPROM variables {{{ 
+.................... //void DataEE_Read(int32 addr, int8 * ram, int bytes) { 
+.................... // 
+.................... //   int i; 
+.................... // 
+.................... //   for(i=0;i<=bytes;i++,ram++,addr++) 
+.................... // 
+.................... //     *ram=read_eeprom(addr); 
+.................... // 
+.................... //} 
+....................  
+.................... //void DataEE_Write(int32 addr, int8 * ram, int bytes) { 
+.................... // 
+.................... //   int i; 
+.................... // 
+.................... //   for(i=0;i<=bytes;i++,ram++,addr++) 
+.................... // 
+.................... //     write_eeprom(addr,*ram); 
+.................... // 
+.................... //} 
+....................  
+.................... //addressmod (eeprom,DataEE_Read,DataEE_Write,1,0xFE); 
+.................... // }}} 
+....................  
+.................... // DTMF Key maps {{{ 
+.................... // 
+.................... #define d1 0x01 
+.................... #define d2 0x02 
+.................... #define d3 0x03 
+.................... #define d4 0x04 
+.................... #define d5 0x05 
+.................... #define d6 0x06 
+.................... #define d7 0x07 
+.................... #define d8 0x08 
+.................... #define d9 0x09 
+.................... #define d0 0x0a 
+.................... #define ds 0x0b 
+.................... #define dp 0x0c 
+.................... #define da 0x0d 
+.................... #define db 0x0e 
+.................... #define dc 0x0f 
+.................... #define dd 0x00 
+.................... // }}} 
+....................  
+.................... // 
+.................... //Timer2 period 
+.................... // 
+.................... // PWM period en fonction de TIMER2_PERIOD: 
+.................... // 125 --> 15.873KHz 
+.................... // 63 --> 31.250KHz 
+.................... // Timer2Period = TOSC * 4 * (PR2+1) 
+.................... // Sine wave has 8 points so the PWM frequency must be divided by 8. 
+.................... // Then, the PWMFreqDivider is used to further divide this period. 
+.................... // This is used to speed up the timer2 interrupts. 
+.................... #define TIMER2_PERIOD 125 // 63us 
+.................... //#define TIMER2_PERIOD 63 // 32us 
+.................... #define PWMFreqDivider	2 
+....................  
+.................... #bit TRISC3 = 0x87.3 
+....................  
+.................... #bit RB4 = 0x06.4 
+.................... #bit RA5 = 0x05.5 
+....................  
+.................... // PI 
+.................... #define PI 3.1415926 
+....................  
+.................... // 
+.................... // State machine modes 
+.................... // 
+.................... #define IDLE 	0 
+.................... #define ADMIN 	1 
+.................... #define IO	2 
+.................... #define HWRESET 3 
+....................  
+....................  
+....................  
+.................... // Define structures {{{ 
+.................... // sDTMF character structure  
+.................... // 
+.................... typedef struct {  
+.................... 			int Key 	: 4; 
+.................... 			int Strobe	: 1; 
+.................... 			int Last	: 1; 
+.................... 			int UNUSED	: 2; 
+.................... } sDTMF; 
+....................  
+.................... typedef struct { 
+.................... 		int RX0 : 1; 
+.................... 		int RX1 : 1; 
+.................... 		int RX2 : 1; 
+.................... } sCOR; 
+....................  
+....................  
+.................... typedef struct tsRegSize { 
+.................... 		int * ptr; 
+.................... 		int size; 
+.................... } sRegSize;		 
+....................  
+.................... //typedef struct tsActiveBits { 
+.................... //	int LinkActive : 1; 
+.................... //	int LocalActive : 1; 
+.................... //	int LocalBusy : 1; 
+.................... //	int UNUSED : 5; 
+.................... //} ActiveBits; 
+.................... // 
+.................... //#define LinkActive ActiveBits.LinkActive; 
+.................... //#define LocalActive ActiveBits.LocalActive; 
+.................... //#define LocalBusy ActiveBits.LocalBusy; 
+.................... // }}} 
+....................  
+.................... // Function headers {{{ 
+.................... //  
+.................... void timer0interrupt(void); 
+.................... void resetAdminPwd(void); 
+.................... void processUserFunctions(int Key); 
+.................... //void StartPWM(int div); 
+.................... //void StopPWM(void); 
+.................... void DelayMs(int); 
+.................... void ProcessDTMF(int Key); 
+.................... void ClearDTMFSeq(void); 
+.................... void DTMFStates(void); 
+.................... void dit(void); 
+.................... void dah(void); 
+.................... void beep(void); 
+.................... void ptt(); 
+.................... void ProcessCorIn(void); 
+.................... void ProcessAuxOut(void); 
+.................... void morsepause(void); 
+.................... void morse(int reg); 
+.................... void morseStart(int wait); 
+.................... void morseStop(void); 
+.................... void TempCtrl(void); 
+.................... void AdminStates(void); 
+.................... void waits(int sec); 
+.................... void MasterHWReset(void); 
+.................... void ClearWord(int reg ); 
+.................... void SetWord(int reg, int arg); 
+.................... void SetArray(int reg, sDTMF * arg); 
+.................... void SetBits(int reg,sDTMF sbit ); 
+.................... void ClearBits(int reg,sDTMF sbit ); 
+.................... void ExecOP(int op,int port); 
+.................... void SetAuxCfg(void); 
+.................... void reset_eeprom(void); 
+.................... void write_ee(int x,int val); 
+.................... void morse_word_delay(void); 
+.................... void ProcessCorInPort(void); 
+....................  
+.................... int get_sin_val(void); 
+.................... int CheckPWDResetPassword (void); 
+.................... //int* getRamPtr(int id); 
+.................... int eeprom_cksum(int NumAddr); 
+.................... //int dec2hex(int c1,int c2); 
+.................... int CheckPassword(void); 
+.................... // }}} 
+.................... 	 
+.................... // Volatile variables {{{ 
+.................... // These variables can be used in  
+.................... // normal functions and ISR routies. 
+.................... // 
+.................... int Last_COR; 
+.................... int DiagTailPTT; 
+.................... volatile int PTT; 
+.................... volatile int PWMPtr; // PWM sine wave sample pocharer 0..7 
+.................... volatile int PWMDiv; // PWM freq divider 
+.................... volatile int PWMDivCnt; // Divider counter 
+.................... volatile int16 Temp; 
+.................... volatile unsigned int16 min; 
+.................... volatile int hr_2; 
+.................... volatile sDTMF DTMF; // ISR writes to this register. 
+.................... volatile int COR_IN; 
+.................... volatile bit DTMFStrb; 
+.................... volatile bit TXMorseID; // 30 min timeout for MorseID 
+.................... volatile long int CommandModeTimeout; 
+.................... volatile bit TempUpdate; 
+.................... volatile bit Tail; 
+.................... volatile bit DiagTail; 
+.................... volatile bit ClearDTMFFlag; 
+....................  
+.................... // }}} 
+....................  
+.................... // Declare SIN tables {{{ 
+.................... #define PWMOffset TIMER2_PERIOD/2 // 125/2 = 63.5 (63) 
+.................... #define Offset    0 // 31.5 
+.................... #define Amplitude (TIMER2_PERIOD/2)*0.85 // 85% of max swing 
+.................... //#define Amplitude 63/27 // 7 
+.................... const float sin[] = {	0, 
+.................... 			0.70711, 
+.................... 			1, 
+.................... 			0.70711, 
+.................... 			0, 
+.................... 			-0.70711, 
+.................... 			-1, 
+.................... 			-0.70711}; 
+....................  
+.................... const int8 sinval[] =  {Offset + (int8)(sin[0]*Amplitude), 
+.................... 			Offset + (int8)(sin[1]*Amplitude), 
+.................... 			Offset + (int8)(sin[2]*Amplitude), 
+.................... 			Offset + (int8)(sin[3]*Amplitude), 
+.................... 			Offset + (int8)(sin[4]*Amplitude), 
+.................... 			Offset + (int8)(sin[5]*Amplitude), 
+.................... 			Offset + (int8)(sin[6]*Amplitude), 
+.................... 			Offset + (int8)(sin[7]*Amplitude) 
+.................... 			}; 
+.................... //}}} 
+....................  
+.................... // Global variables {{{ 
+....................  
+.................... bit PWM_ACTIVE; 
+.................... bit AuxInTail; 
+....................  
+.................... // Define CORE_STATEs 
+.................... #define COR_IDLE 	0 
+.................... #define COR_LINK 	1 
+.................... #define COR_LOCAL 	2 
+.................... #define COR_PWM 	3 
+....................  
+....................  
+.................... sDTMF DTMFSeq[DTMFSeqSize]; 
+.................... sDTMF * DTMFPtr; 
+.................... sDTMF * LastDTMF; 
+.................... //int RXEnable; // RX2,RX1,RX0 
+.................... int STATE; 
+.................... int PTT_ENABLE; 
+.................... volatile int AuxTimer; 
+.................... int AuxInTailChar; 
+.................... int AuxOut; 
+.................... int AdminPtt; 
+.................... const int SiteGID = SITE_GID_VAL; 
+.................... int LinkTimeoutTimer; 
+.................... int PTTTimeoutTimer; 
+.................... int COR_Per_Minute; 
+.................... unsigned int16 delay; 
+....................  
+.................... int PoundChars; 
+.................... sCOR COR; 
+.................... signed int TempC; 
+....................  
+.................... //const int mul10[] = {0,10,20,30,40,50,60,70,80,90,100,110,120}; 
+....................  
+.................... // }}} 
+....................  
+.................... // Morse characters binary mapping {{{ 
+.................... // Dit = 01 
+.................... // Dah = 10 
+.................... // Stop = 00 
+.................... // Word is read from right to left (LSB to MSB) 
+.................... const int8 cMorseChar[] = { 
+.................... 	0b10101010, // 0 (dah dah dah dah dah)	0 
+.................... 	0b01101010, // 1 (dit dah dah dah dah)	1 
+.................... 	0b01011010, // 2 (dit dit dah dah dah)	2 
+.................... 	0b01010110, // 3 (dit dit dit dah dah)	3 
+.................... 	0b01010101, // 4 (dit dit dit dit dah)	4 
+.................... 	0b01010101, // 5 (dit dit dit dit dit)	5 
+.................... 	0b10010101, // 6 (dah dit dit dit dit)	6 
+.................... 	0b10100101, // 7 (dah dah dit dit dit)	7 
+.................... 	0b10101001, // 8 (dah dah dah dit dit)	8 
+.................... 	0b10101010, // 9 (dah dah dah dah dit)	9 
+.................... 	0b01100000, // a (dit dah)		10 
+.................... 	0b10010101, // b (dah dit dit dit)	11 
+.................... 	0b10011001, // c (dah dit dah dit)	12 
+.................... 	0b10010100, // d (dah dit dit)		13 
+.................... 	0b01000000, // e (dit)			14 
+.................... 	0b01011001, // f (dit dit dah dit)	15 
+.................... 	0b10100100, // g (dah dah dit) 		16 
+.................... 	0b01010101, // h (dit dit dit dit)	17 
+.................... 	0b01010000, // i (dit dit)		18 
+.................... 	0b01101010, // j (dit dah dah dah)	19 
+.................... 	0b10011000, // k (dah dit dah)		20 
+.................... 	0b01100101, // l (dit dah dit dit)	21 
+.................... 	0b10100000, // m (dah dah)		22 
+.................... 	0b10010000, // n (dah dit)		23 
+.................... 	0b10101000, // o (dah dah dah)		24 
+.................... 	0b01101001, // p (dit dah dah dit)	25 
+.................... 	0b10100110, // q (dah dah dit dah)	26 
+.................... 	0b01100100, // r (dit dah dit)		27 
+.................... 	0b01010100, // s (dit dit dit)		28 
+.................... 	0b10000000, // t (dah)			29 
+.................... 	0b01011000, // u (dit dit dah)		30 
+.................... 	0b01010110, // v (dit dit dit dah)	31 
+.................... 	0b01101000, // w (dit dah dah)		32 
+.................... 	0b10010110, // x (dah dit dit dah)	33 
+.................... 	0b10011010, // y (dah dit dah dah)	34 
+.................... 	0b10100101 // z (dah dah dit dit)	35 
+.................... }; // }}} 
+....................  
+.................... // Define circuit port symbols {{{ 
+.................... // 
+....................  
+.................... #bit RC0=07.0 
+.................... #bit RC1=07.1 
+.................... #bit RC2=07.2 
+.................... #bit RC4=07.4 
+.................... #bit RC5=07.5 
+.................... #bit RC6=07.6 
+....................  
+.................... #define COR0 RB5 
+.................... #define COR1 RB6 
+.................... #define COR2 RB7 
+....................  
+.................... #define RX_EN0	PIN_C0 
+.................... #define RX_EN1	PIN_C1 
+.................... #define RX_EN2	PIN_C2 
+....................  
+....................  
+....................  
+.................... #define PTT0_PIN PIN_C4 
+.................... #define PTT1_PIN PIN_C5 
+.................... #define PTT2_PIN PIN_C6 
+.................... bit PTT0; 
+.................... bit PTT1; 
+.................... bit PTT2; 
+....................  
+.................... #define AUX0 RB4 
+.................... #define AUX1 RA5 
+....................  
+.................... #define AUX0_PIN PIN_B4 
+.................... #define AUX1_PIN PIN_A5 
+.................... #define AUX0_IN   PIN_A5 
+.................... #define AUX1_IN  PIN_B4 
+....................  
+.................... #bit TRISB4 = 0x86.4 
+.................... #bit TRISA5 = 0x85.5 
+....................  
+.................... #define AUX1_INPUT_PIN PIN_A5 
+.................... #define AUX2_INPUT_PIN PIN_B4 
+.................... #define AUX1_OUTPUT_PIN PIN_B4 
+.................... #define AUX2_OUTPUT_PIN PIN_A5 
+....................  
+.................... #define SET_AUX1_INPUT TRISA5=1 
+.................... #define SET_AUX2_INPUT TRISB4=1 
+.................... #define SET_AUX1_OUTPUT TRISB4=0 
+.................... #define SET_AUX2_OUTPUT TRISA5=0 
+....................  
+.................... //#define TRISAUX0 TRISB4 
+.................... //#define TRISAUX1 TRISA5 
+.................... // }}} 
+....................  
+.................... #define 	EEPROM_CKSUM	     0xFF 
+....................  
+.................... typedef struct sRegInfo_t { 
+.................... 	int8 ptr;		// Pointer in EEPROM 
+.................... 	int8 * ramPtr; 
+.................... 	int8 size; 
+.................... }	sRegInfo; 
+....................  
+.................... const sRegInfo RegInfo[] = { 
+.................... 	//								ID	ADDR 
+.................... 	//--------------------------------------------------------------------------- 
+.................... 	{GET_EEPROM_PTR(AdminPwd)         , &AdminPwd[0]      , 8}            , // 0	0:7 
+.................... 	{GET_EEPROM_PTR(Enable)           , &Enable           , 1}            , // 1	8 
+.................... 	{GET_EEPROM_PTR(Polarity)         , &Polarity         , 1}            , // 2	9 
+.................... 	{GET_EEPROM_PTR(RX0PTT)           , &RX0PTT           , 1}            , // 3	A 
+.................... 	{GET_EEPROM_PTR(RX1PTT)           , &RX1PTT           , 1}            , // 4	B 
+.................... 	{GET_EEPROM_PTR(RX2PTT)           , &RX2PTT           , 1}            , // 5	C 
+.................... 	{GET_EEPROM_PTR(PWMPTT)           , &PWMPTT           , 1}            , // 6	D 
+.................... 	{GET_EEPROM_PTR(DitDelay)         , &DitDelay         , 1}            , // 7	E 
+.................... 	{GET_EEPROM_PTR(LinkTimeout)      , &LinkTimeout      , 1}            , // 8	F 
+.................... 	{GET_EEPROM_PTR(TempLowOp)        , &TempLowOp        , 1}            , // 9	10 
+.................... 	{GET_EEPROM_PTR(TempHighOp)       , &TempHighOp       , 1}            , // 10	11 
+.................... 	{GET_EEPROM_PTR(TempNormOp)       , &TempNormOp       , 1}            , // 11	12 
+.................... 	{GET_EEPROM_PTR(AuxInAOp)         , &AuxInAOp         , 1}            , // 12	13 
+.................... 	{GET_EEPROM_PTR(AuxInBOp)         , &AuxInBOp         , 1}            , // 13	14 
+.................... 	{GET_EEPROM_PTR(PUAuxOutValue)    , &PUAuxOutValue    , 1}            , // 14	15 
+.................... 	{GET_EEPROM_PTR(SiteID)           , &SiteID           , 1}            , // 15	16 
+.................... 	{GET_EEPROM_PTR(MaxCorPerMinute)  , &MaxCorPerMinute  , 1}            , // 16	17 
+.................... 	{GET_EEPROM_PTR(SiteIDMorse)      , &SiteIDMorse[0]   , 6}            , // 17	18 
+.................... 	{GET_EEPROM_PTR(SiteIDMorse)+1    , &SiteIDMorse[1]   , 1}            , // 18	19 
+.................... 	{GET_EEPROM_PTR(SiteIDMorse)+2    , &SiteIDMorse[2]   , 1}            , // 19	1A 
+.................... 	{GET_EEPROM_PTR(SiteIDMorse)+3    , &SiteIDMorse[3]   , 1}            , // 20	1B 
+.................... 	{GET_EEPROM_PTR(SiteIDMorse)+4    , &SiteIDMorse[4]   , 1}            , // 21	1C 
+.................... 	{GET_EEPROM_PTR(SiteIDMorse)+5    , &SiteIDMorse[5]   , 1}            , // 22	1D 
+.................... 	{GET_EEPROM_PTR(TempLow)          , &TempLow          , 1}            , // 23	1E 
+.................... 	{GET_EEPROM_PTR(TempHigh)         , &TempHigh         , 1}            , // 24	1F 
+.................... 	{GET_EEPROM_PTR(AuxCfg)           , &AuxCfg           , 1}            , // 25	20 
+.................... 	{GET_EEPROM_PTR(EnableMorseIDTx)  , &EnableMorseIDTx  , 1}            , // 26	21 
+.................... 	{GET_EEPROM_PTR(EnableSiteIDTx)   , &EnableSiteIDTx   , 1}            , // 27	22 
+.................... 	{GET_EEPROM_PTR(PWMAmplitude)     , &PWMAmplitude     , 1}            , // 28	23 
+.................... 	{GET_EEPROM_PTR(UserFunction1Reg) , &UserFunction1Reg , 1}            , // 29   24 
+.................... 	{GET_EEPROM_PTR(UserFunction1Op)  , &UserFunction1Op  , 1}            , // 30   25 
+.................... 	{GET_EEPROM_PTR(UserFunction2Reg) , &UserFunction2Reg , 1}            , // 31   26 
+.................... 	{GET_EEPROM_PTR(UserFunction2Op)  , &UserFunction2Op  , 1}            , // 32   27 
+.................... 	{GET_EEPROM_PTR(UserFunction3Reg) , &UserFunction3Reg , 1}            , // 33   28 
+.................... 	{GET_EEPROM_PTR(UserFunction3Op)  , &UserFunction3Op  , 1}            , // 34   29 
+.................... 	{GET_EEPROM_PTR(UserFunction4Reg) , &UserFunction4Reg , 1}            , // 35   2A 
+.................... 	{GET_EEPROM_PTR(UserFunction4Op)  , &UserFunction4Op  , 1}            , // 36   2B 
+.................... 	{GET_EEPROM_PTR(PTTTimeout)       , &PTTTimeout       , 1}            , // 37   2C 
+.................... 	{GET_EEPROM_PTR(EEPROM_VALID)     , &EEPROM_VALID     , 1}              // 38   2D 
+.................... }; 
+....................  
+.................... const int RegInfoSize = sizeof(RegInfo)/sizeof(sRegInfo); 
+....................  
+....................  
+....................  
+.................... // 
+.................... // Set _CONFIG bits 
+.................... // 
+.................... //__CONFIG(INTIO & WDTEN & PWRTDIS &  
+.................... //MCLRDIS & UNPROTECT & BORDIS & IESODIS & FCMDIS); 
+....................  
+.................... #INT_AD 
+.................... void adinterrupt(void) { // {{{ 
+.................... 	Temp=read_adc(ADC_READ_ONLY); 
+*
+0122:  BTFSC  1F.1
+0123:  GOTO   122
+0124:  BSF    03.5
+0125:  MOVF   1E,W
+0126:  BCF    03.5
+0127:  MOVWF  63
+0128:  MOVF   1E,W
+0129:  MOVWF  64
+....................         TempUpdate=1; 
+012A:  BSF    6A.2
+.................... } // }}} 
+....................  
+012B:  BCF    0C.6
+012C:  BCF    0A.3
+012D:  GOTO   030
+.................... #INT_RTCC 
+.................... void timer0interrupt(void) { // {{{ 
+....................   if ( CommandModeTimeout ) { 
+012E:  MOVF   6B,W
+012F:  IORWF  6C,W
+0130:  BTFSC  03.2
+0131:  GOTO   136
+....................     CommandModeTimeout--; 
+0132:  MOVF   6B,W
+0133:  BTFSC  03.2
+0134:  DECF   6C,F
+0135:  DECF   6B,F
+....................   } 
+....................   if ( min ) { 
+0136:  MOVF   65,W
+0137:  IORWF  66,W
+0138:  BTFSC  03.2
+0139:  GOTO   13F
+....................     min--; 
+013A:  MOVF   65,W
+013B:  BTFSC  03.2
+013C:  DECF   66,F
+013D:  DECF   65,F
+.................... 	} 
+.................... 	else { 
+013E:  GOTO   165
+.................... 		COR_Per_Minute=0; 
+013F:  BSF    03.5
+0140:  CLRF   28
+.................... 		if ( hr_2 ) { 
+0141:  BCF    03.5
+0142:  MOVF   67,F
+0143:  BTFSC  03.2
+0144:  GOTO   147
+.................... 			hr_2--; 
+0145:  DECF   67,F
+.................... 		} 
+.................... 		else { 
+0146:  GOTO   14A
+.................... 			hr_2 = SITE_ID_TX_DELAY; // Transmit every 30 mins  
+0147:  MOVLW  1E
+0148:  MOVWF  67
+.................... 			TXMorseID=1; 
+0149:  BSF    6A.1
+.................... 		} 
+.................... 		// Is the link timeout timer enabled? 
+.................... 		if ( LinkTimeout ) { 
+014A:  MOVF   3E,F
+014B:  BTFSC  03.2
+014C:  GOTO   155
+.................... 			if ( LinkTimeoutTimer ) { 
+014D:  BSF    03.5
+014E:  MOVF   26,F
+014F:  BTFSC  03.2
+0150:  GOTO   153
+.................... 				LinkTimeoutTimer--; 
+0151:  DECF   26,F
+.................... 			} else { // Timeout reached 
+0152:  GOTO   156
+.................... 				Enable &= 0xFE; // Disable link radio 
+0153:  BCF    03.5
+0154:  BCF    37.0
+0155:  BSF    03.5
+.................... 			} 
+.................... 		} 
+....................     if ( PTTTimeout ) { 
+0156:  BCF    03.5
+0157:  MOVF   5B,F
+0158:  BTFSC  03.2
+0159:  GOTO   160
+....................       if ( PTTTimeoutTimer ) { 
+015A:  BSF    03.5
+015B:  MOVF   27,F
+015C:  BTFSC  03.2
+015D:  GOTO   15F
+....................         PTTTimeoutTimer--; 
+015E:  DECF   27,F
+015F:  BCF    03.5
+....................       } 
+....................     } 
+.................... 		read_adc(ADC_START_ONLY);  
+0160:  BSF    1F.1
+.................... 		min = 1831; // 915.527 TMR0 interrupts per minute @4MHz. 
+0161:  MOVLW  07
+0162:  MOVWF  66
+0163:  MOVLW  27
+0164:  MOVWF  65
+.................... 	}		 
+.................... 	if (AuxTimer) { 
+0165:  BSF    03.5
+0166:  MOVF   22,F
+0167:  BTFSC  03.2
+0168:  GOTO   16A
+.................... 		AuxTimer--; 
+0169:  DECF   22,F
+.................... 	} 
+.................... } // }}} 
+....................  
+.................... //#INT_RA 
+.................... //void rainterrupt(void) { // {{{ 
+.................... 	//if ( input(PIN_A4) && !DTMFStrb ) { 
+.................... 		//DTMF.Key = input_a() & 0xF; // Keep only 5 bits. 
+.................... 		//DTMF.Strobe = 1; 
+.................... 	//} 
+.................... 	//DTMFStrb = input(PIN_A4); 
+.................... //} // }}} 
+....................  
+016A:  BCF    03.5
+016B:  BCF    0B.2
+016C:  BCF    0A.3
+016D:  GOTO   030
+.................... #INT_RB 
+.................... void rbinterrupt(void) { // {{{ 
+.................... 	if ( input(PIN_A4) && !DTMFStrb ) { 
+*
+029D:  BTFSS  05.4
+029E:  GOTO   2AA
+029F:  BTFSC  6A.0
+02A0:  GOTO   2AA
+.................... 		DTMF.Key = input_a() & 0xF; // Keep only 4 bits. 
+02A1:  MOVF   05,W
+02A2:  ANDLW  0F
+02A3:  ANDLW  0F
+02A4:  MOVWF  20
+02A5:  MOVLW  F0
+02A6:  ANDWF  68,W
+02A7:  IORWF  20,W
+02A8:  MOVWF  68
+.................... 		DTMF.Strobe = 1; 
+02A9:  BSF    68.4
+.................... 	} 
+.................... 	DTMFStrb = input(PIN_A4); 
+02AA:  BTFSS  05.4
+02AB:  BCF    6A.0
+02AC:  BTFSC  05.4
+02AD:  BSF    6A.0
+.................... 	ProcessCorInPort(); 
+02AE:  CALL   1BB
+.................... } // }}} 
+....................  
+02AF:  BCF    0B.0
+02B0:  BCF    0A.3
+02B1:  GOTO   030
+.................... void ProcessCorInPort(void) { // {{{ 
+.................... 	bit LocalBusy; 
+.................... 	bit NO_COR; 
+.................... 	bit COR_Negedge; 
+.................... 	bit RX0_DEFAULT; 
+....................  
+.................... 	COR_IN = input_b(); 
+*
+01BB:  MOVF   06,W
+01BC:  MOVWF  69
+.................... 	COR_IN &= 0xE0; 
+01BD:  MOVLW  E0
+01BE:  ANDWF  69,F
+.................... 	COR_IN = COR_IN >> 5; 
+01BF:  SWAPF  69,F
+01C0:  RRF    69,F
+01C1:  MOVLW  07
+01C2:  ANDWF  69,F
+.................... 	COR = (sCOR)(COR_IN ^ Polarity); 
+01C3:  MOVF   69,W
+01C4:  XORWF  38,W
+01C5:  BSF    03.5
+01C6:  MOVWF  2C
+.................... 	 
+.................... 	// LocalBusy means that a QSO on Radio 2 or Radio 3 is on 
+.................... 	// LocalBusy = (((int8)COR & Last_COR & 0x06) != 0); 
+.................... 	LocalBusy = (((int8)COR & Last_COR & 0x06) != 0x00); 
+01C7:  BCF    4D.0
+01C8:  MOVF   2C,W
+01C9:  BCF    03.5
+01CA:  ANDWF  5D,W
+01CB:  ANDLW  06
+01CC:  BTFSC  03.2
+01CD:  GOTO   1D1
+01CE:  BSF    03.5
+01CF:  BSF    4D.0
+01D0:  BCF    03.5
+....................  
+.................... 	// 
+.................... 	// All enabled COR signals just became Low, then enable the tail: 
+.................... 	// 
+.................... 	NO_COR = ((int8)COR == 0x00); 
+01D1:  BSF    03.5
+01D2:  BCF    4D.1
+01D3:  MOVF   2C,F
+01D4:  BTFSC  03.2
+01D5:  BSF    4D.1
+.................... 	COR_Negedge = NO_COR && ((Enable & Last_COR) != 0x00); 
+01D6:  BCF    4D.2
+01D7:  BTFSS  4D.1
+01D8:  GOTO   1E2
+01D9:  BCF    03.5
+01DA:  MOVF   37,W
+01DB:  ANDWF  5D,W
+01DC:  BTFSS  03.2
+01DD:  GOTO   1E0
+01DE:  BSF    03.5
+01DF:  GOTO   1E2
+01E0:  BSF    03.5
+01E1:  BSF    4D.2
+.................... 	if ( COR_Negedge ) { // COR from radios falls  
+01E2:  BTFSS  4D.2
+01E3:  GOTO   1F0
+.................... 		// Only act on selected radios when COR fall 
+.................... 		DiagTail = ((Last_COR & EnableSiteIDTx) != 0x00);  
+01E4:  BCF    03.5
+01E5:  BCF    6A.4
+01E6:  MOVF   5D,W
+01E7:  ANDWF  51,W
+01E8:  BTFSS  03.2
+01E9:  BSF    6A.4
+.................... 		// Don't send diag tail back to radio that just transmitted 
+....................     		DiagTailPTT = ~Last_COR & 0x07; 
+01EA:  MOVF   5D,W
+01EB:  XORLW  FF
+01EC:  ANDLW  07
+01ED:  MOVWF  5E
+.................... //		Tail = DiagTail || AuxInTail; 
+.................... 		COR_Per_Minute++; 
+01EE:  BSF    03.5
+01EF:  INCF   28,F
+.................... 	} 
+....................   if ( NO_COR ) { 
+01F0:  BTFSS  4D.1
+01F1:  GOTO   1F9
+....................     PTTTimeoutTimer = PTTTimeout; 
+01F2:  BCF    03.5
+01F3:  MOVF   5B,W
+01F4:  BSF    03.5
+01F5:  MOVWF  27
+....................     ClearDTMFFlag=1; 
+01F6:  BCF    03.5
+01F7:  BSF    6A.5
+01F8:  BSF    03.5
+....................   } 
+.................... 	// 
+.................... 	// Only process COR_IN if Last_COR is 0 
+.................... 	// This garantees that a current conversation is not 
+.................... 	// cut by a new COR_IN 
+.................... 	// 
+....................  
+.................... 	//if ( (Last_COR == 0) || ((int8)COR==0) ) {  
+.................... 	// !LocalBusy --> None of the local radios are being retransmitted 
+.................... 	// (LocalActive | LinkActive) -> None of the radios' COR signals are high 
+.................... 	// COR == 0 --> If all COR's have dropped, then go thru this to clear the PTT state and drop RX relays 
+.................... 	if ( !LocalBusy || (int8)COR==0 ) {  
+01F9:  BTFSS  4D.0
+01FA:  GOTO   1FE
+01FB:  MOVF   2C,F
+01FC:  BTFSS  03.2
+01FD:  GOTO   28D
+.................... 		// Stop interference 
+.................... 		if ( MaxCorPerMinute && (COR_Per_Minute > MaxCorPerMinute )) { 
+01FE:  BCF    03.5
+01FF:  MOVF   46,F
+0200:  BTFSC  03.2
+0201:  GOTO   20E
+0202:  BSF    03.5
+0203:  MOVF   28,W
+0204:  BCF    03.5
+0205:  SUBWF  46,W
+0206:  BTFSC  03.0
+0207:  GOTO   20E
+.................... 			// This inhibits the PTTs for about 30 seconds in case of 
+.................... 			// interference. 
+.................... 			// Also, in order to protect the relays, the RX0 relay will remain 
+.................... 			// on for about 30 seconds 
+.................... 			PTT_ENABLE = 0x00; 
+0208:  BSF    03.5
+0209:  CLRF   21
+.................... 			RX0_DEFAULT = 1; 
+020A:  BSF    4D.3
+.................... 			(int8)COR = 0x00; 
+020B:  CLRF   2C
+.................... 		} else { 
+020C:  GOTO   212
+020D:  BCF    03.5
+.................... 			PTT_ENABLE = Enable; 
+020E:  MOVF   37,W
+020F:  BSF    03.5
+0210:  MOVWF  21
+.................... 			RX0_DEFAULT = 0; 
+0211:  BCF    4D.3
+.................... 		} 
+.................... 		// COR on RX2 and (That's the only COR or the RX2 is enabled or no other radio is enabled) then enter 
+.................... 		if ( COR.RX2 && ( (int8)COR == 0x04 || (Enable & 0x04) || !Enable)) { // RX2 
+0212:  BTFSS  2C.2
+0213:  GOTO   232
+0214:  MOVF   2C,W
+0215:  SUBLW  04
+0216:  BTFSC  03.2
+0217:  GOTO   223
+0218:  BCF    03.5
+0219:  BTFSS  37.2
+021A:  GOTO   21D
+021B:  BSF    03.5
+021C:  GOTO   223
+021D:  MOVF   37,F
+021E:  BTFSC  03.2
+021F:  GOTO   222
+0220:  BSF    03.5
+0221:  GOTO   232
+0222:  BSF    03.5
+.................... 			output_bit(RX_EN0,0); 
+0223:  BCF    03.5
+0224:  BCF    07.0
+.................... 			output_bit(RX_EN1,0); 
+0225:  BCF    07.1
+.................... 			output_bit(RX_EN2,1); 
+0226:  BSF    07.2
+.................... 			Last_COR = 0x04; 
+0227:  MOVLW  04
+0228:  MOVWF  5D
+.................... 			Tail = 0; // avoid tail if conversation starts 
+0229:  BCF    6A.3
+.................... 			if ( Enable & 0x04 ) { 
+022A:  BTFSS  37.2
+022B:  GOTO   22F
+.................... 				PTT = RX2PTT; 
+022C:  MOVF   3B,W
+022D:  MOVWF  5F
+.................... 			} else { 
+022E:  GOTO   230
+.................... 				PTT = 0x00; 
+022F:  CLRF   5F
+.................... 			} 
+.................... 		} 
+.................... 		else if ( COR.RX1 && ((int8)COR == 0x02 || (Enable & 0x02) || !Enable)) { // RX1 
+0230:  GOTO   27F
+0231:  BSF    03.5
+0232:  BTFSS  2C.1
+0233:  GOTO   252
+0234:  MOVF   2C,W
+0235:  SUBLW  02
+0236:  BTFSC  03.2
+0237:  GOTO   243
+0238:  BCF    03.5
+0239:  BTFSS  37.1
+023A:  GOTO   23D
+023B:  BSF    03.5
+023C:  GOTO   243
+023D:  MOVF   37,F
+023E:  BTFSC  03.2
+023F:  GOTO   242
+0240:  BSF    03.5
+0241:  GOTO   252
+0242:  BSF    03.5
+.................... 			output_bit(RX_EN0,0); 
+0243:  BCF    03.5
+0244:  BCF    07.0
+.................... 			output_bit(RX_EN2,0); 
+0245:  BCF    07.2
+.................... 			output_bit(RX_EN1,1); 
+0246:  BSF    07.1
+.................... 			Last_COR = 0x02; 
+0247:  MOVLW  02
+0248:  MOVWF  5D
+.................... 			Tail = 0; // avoid tail if conversation starts 
+0249:  BCF    6A.3
+.................... 			if ( Enable & 0x02 ) { 
+024A:  BTFSS  37.1
+024B:  GOTO   24F
+.................... 				PTT = RX1PTT; 
+024C:  MOVF   3A,W
+024D:  MOVWF  5F
+.................... 			} else { 
+024E:  GOTO   250
+.................... 				PTT = 0x00; 
+024F:  CLRF   5F
+.................... 			} 
+.................... 		} 
+.................... 		else if ( COR.RX0 && ((int8)COR == 0x01 || (Enable & 0x01) || !Enable)) { // RX0 
+0250:  GOTO   27F
+0251:  BSF    03.5
+0252:  BTFSS  2C.0
+0253:  GOTO   271
+0254:  DECFSZ 2C,W
+0255:  GOTO   257
+0256:  GOTO   262
+0257:  BCF    03.5
+0258:  BTFSS  37.0
+0259:  GOTO   25C
+025A:  BSF    03.5
+025B:  GOTO   262
+025C:  MOVF   37,F
+025D:  BTFSC  03.2
+025E:  GOTO   261
+025F:  BSF    03.5
+0260:  GOTO   271
+0261:  BSF    03.5
+.................... 			output_bit(RX_EN1,0); 
+0262:  BCF    03.5
+0263:  BCF    07.1
+.................... 			output_bit(RX_EN2,0); 
+0264:  BCF    07.2
+.................... 			output_bit(RX_EN0,1); 
+0265:  BSF    07.0
+.................... 			// Give no priority to link radio. 
+.................... 			// Any other radio may interrupt the link radio. 
+.................... 			// This is required for the phone patch. 
+.................... 			// 
+.................... 			// Also, data from this radio does not have the 
+.................... 			// siteID diagnostic tail appended to it. 
+.................... 			// 
+.................... 			Last_COR = 0x01; // Give no priority to link radio. 
+0266:  MOVLW  01
+0267:  MOVWF  5D
+.................... 			Tail = 0; // avoid tail if conversation starts 
+0268:  BCF    6A.3
+.................... 			if ( Enable & 0x01 ) { 
+0269:  BTFSS  37.0
+026A:  GOTO   26E
+.................... 				PTT = RX0PTT; 
+026B:  MOVF   39,W
+026C:  MOVWF  5F
+.................... 			} else { 
+026D:  GOTO   26F
+.................... 				PTT = 0x00; 
+026E:  CLRF   5F
+.................... 			} 
+.................... 		} 
+.................... 		else { 
+026F:  GOTO   27F
+0270:  BSF    03.5
+.................... 			output_bit(RX_EN1,0); 
+0271:  BCF    03.5
+0272:  BCF    07.1
+.................... 			output_bit(RX_EN2,0); 
+0273:  BCF    07.2
+.................... 			output_bit(RX_EN0,RX0_DEFAULT);  
+0274:  BSF    03.5
+0275:  BTFSC  4D.3
+0276:  GOTO   27B
+0277:  BCF    03.5
+0278:  BCF    07.0
+0279:  GOTO   27D
+027A:  BSF    03.5
+027B:  BCF    03.5
+027C:  BSF    07.0
+.................... 			Last_COR = 0; 
+027D:  CLRF   5D
+.................... 			PTT = 0 ;  
+027E:  CLRF   5F
+.................... 		} 
+....................     if ( PTTTimeout && !PTTTimeoutTimer ) { 
+027F:  MOVF   5B,F
+0280:  BTFSC  03.2
+0281:  GOTO   28A
+0282:  BSF    03.5
+0283:  MOVF   27,F
+0284:  BTFSC  03.2
+0285:  GOTO   288
+0286:  BCF    03.5
+0287:  GOTO   28A
+....................       PTT=0; 
+0288:  BCF    03.5
+0289:  CLRF   5F
+....................     } 
+.................... 		ptt();	 
+028A:  CALL   16E
+.................... 	} 
+.................... 	else {  // Ongoing QSO  
+028B:  GOTO   29C
+028C:  BSF    03.5
+.................... 		Last_COR &= (int)COR; 
+028D:  MOVF   2C,W
+028E:  BCF    03.5
+028F:  ANDWF  5D,F
+....................     if ( PTTTimeout && !PTTTimeoutTimer ) { 
+0290:  MOVF   5B,F
+0291:  BTFSC  03.2
+0292:  GOTO   29C
+0293:  BSF    03.5
+0294:  MOVF   27,F
+0295:  BTFSC  03.2
+0296:  GOTO   299
+0297:  BCF    03.5
+0298:  GOTO   29C
+....................       PTT=0; 
+0299:  BCF    03.5
+029A:  CLRF   5F
+....................       ptt(); 
+029B:  CALL   16E
+....................     } 
+.................... 	} 
+.................... } // }}} 
+029C:  RETLW  00
+....................  
+.................... #INT_TIMER2 
+.................... void timer2interrupt(void) { // {{{ 
+....................     int amplitude; 
+....................     int SinPtr; 
+....................     signed int Sin; 
+....................      
+.................... 	PWMDivCnt--; 
+*
+02B2:  DECFSZ 62,F
+.................... 	if ( !PWMDivCnt ) { 
+02B3:  GOTO   2F9
+.................... 		PWMPtr++; 
+02B4:  INCF   60,F
+.................... 		PWMPtr &= 0x07; 
+02B5:  MOVLW  07
+02B6:  ANDWF  60,F
+....................         SinPtr = PWMPtr & 0x03; 
+02B7:  MOVF   60,W
+02B8:  ANDLW  03
+02B9:  BSF    03.5
+02BA:  MOVWF  4E
+....................         Sin = sinval[SinPtr]; 
+02BB:  MOVF   4E,W
+02BC:  BCF    03.5
+02BD:  CALL   04B
+02BE:  MOVWF  21
+02BF:  BSF    03.5
+02C0:  MOVWF  4F
+....................     	switch(PWMAmplitude) { 
+02C1:  BCF    03.5
+02C2:  MOVF   52,W
+02C3:  BTFSC  03.2
+02C4:  GOTO   2CF
+02C5:  XORLW  01
+02C6:  BTFSC  03.2
+02C7:  GOTO   2D2
+02C8:  XORLW  03
+02C9:  BTFSC  03.2
+02CA:  GOTO   2DA
+02CB:  XORLW  01
+02CC:  BTFSC  03.2
+02CD:  GOTO   2E1
+02CE:  GOTO   2E7
+.................... 	       	case(0x00):amplitude=0;break; 
+02CF:  BSF    03.5
+02D0:  CLRF   4D
+02D1:  GOTO   2EA
+.................... 	       	case(0x01):amplitude=Sin>>3;break; 
+02D2:  BSF    03.5
+02D3:  RRF    4F,W
+02D4:  MOVWF  4D
+02D5:  RRF    4D,F
+02D6:  RRF    4D,F
+02D7:  MOVLW  1F
+02D8:  ANDWF  4D,F
+02D9:  GOTO   2EA
+.................... 	    	case(0x02):amplitude=Sin>>2;break; 
+02DA:  BSF    03.5
+02DB:  RRF    4F,W
+02DC:  MOVWF  4D
+02DD:  RRF    4D,F
+02DE:  MOVLW  3F
+02DF:  ANDWF  4D,F
+02E0:  GOTO   2EA
+.................... 	    	case(0x03):amplitude=Sin>>1;break; 
+02E1:  BCF    03.0
+02E2:  BSF    03.5
+02E3:  RRF    4F,W
+02E4:  MOVWF  4D
+02E5:  GOTO   2EA
+02E6:  BCF    03.5
+.................... 	    	default:amplitude=Sin; 
+02E7:  BSF    03.5
+02E8:  MOVF   4F,W
+02E9:  MOVWF  4D
+.................... 	    } 
+....................         if ( PWMPtr & 0x04) { 
+02EA:  BCF    03.5
+02EB:  BTFSS  60.2
+02EC:  GOTO   2F1
+....................                 amplitude = -amplitude; 
+02ED:  BSF    03.5
+02EE:  COMF   4D,F
+02EF:  INCF   4D,F
+02F0:  BCF    03.5
+....................         } 
+....................     amplitude+=PWMOffset; 
+02F1:  MOVLW  3E
+02F2:  BSF    03.5
+02F3:  ADDWF  4D,F
+....................     set_pwm1_duty(amplitude); 
+02F4:  MOVF   4D,W
+02F5:  BCF    03.5
+02F6:  MOVWF  15
+....................     PWMDivCnt = PWMDiv; 
+02F7:  MOVF   61,W
+02F8:  MOVWF  62
+.................... 	}  
+.................... } // }}} 
+.................... // eeprom_init_check {{{ 
+....................  
+02F9:  BCF    0C.1
+02FA:  BCF    0A.3
+02FB:  GOTO   030
+.................... void eeprom_init_check (void) {  
+.................... 	int8 x,y,eePtr; 
+.................... 	int Valid,cksum,EECKSUM; 
+.................... 	int Val; 
+.................... 	int RamPtr; 
+.................... 	 
+.................... 	y=Offset_EEPROM_VALID; 
+*
+031E:  MOVLW  2D
+031F:  BSF    03.5
+0320:  MOVWF  3E
+.................... 	Valid = read_eeprom(Offset_EEPROM_VALID); 
+0321:  MOVLW  2D
+0322:  BCF    03.5
+0323:  BSF    03.6
+0324:  MOVWF  0D
+0325:  BSF    03.5
+0326:  BCF    0C.7
+0327:  BSF    0C.0
+0328:  BCF    03.5
+0329:  MOVF   0C,W
+032A:  BSF    03.5
+032B:  BCF    03.6
+032C:  MOVWF  40
+.................... 	EECKSUM = read_eeprom(EEPROM_CKSUM); 
+032D:  MOVLW  FF
+032E:  BCF    03.5
+032F:  BSF    03.6
+0330:  MOVWF  0D
+0331:  BSF    03.5
+0332:  BCF    0C.7
+0333:  BSF    0C.0
+0334:  BCF    03.5
+0335:  MOVF   0C,W
+0336:  BSF    03.5
+0337:  BCF    03.6
+0338:  MOVWF  42
+.................... 	cksum = 0; 
+0339:  CLRF   41
+.................... 	 
+.................... 	if ( Valid == 0xA5 ) { // EEPROM content is valid 
+033A:  MOVF   40,W
+033B:  SUBLW  A5
+033C:  BTFSS  03.2
+033D:  GOTO   3A4
+.................... 		//for(x=0;x<sizeof(DefaultValue);x++) { 
+....................     eePtr=0; 
+033E:  CLRF   3F
+....................     for(x=0;x<RegInfo[0].size;x++) { // Process AdminPwd 
+033F:  CLRF   3D
+0340:  MOVF   3D,W
+0341:  SUBLW  07
+0342:  BTFSS  03.0
+0343:  GOTO   365
+.................... 	    RamPtr = RegInfo[0].ramPtr+x; 
+0344:  MOVLW  2F
+0345:  ADDWF  3D,W
+0346:  MOVWF  44
+....................   		restart_wdt(); 
+0347:  CLRWDT
+....................   		Val = read_eeprom(eePtr); 
+0348:  MOVF   3F,W
+0349:  BCF    03.5
+034A:  BSF    03.6
+034B:  MOVWF  0D
+034C:  BSF    03.5
+034D:  BCF    0C.7
+034E:  BSF    0C.0
+034F:  BCF    03.5
+0350:  MOVF   0C,W
+0351:  BSF    03.5
+0352:  BCF    03.6
+0353:  MOVWF  43
+.................... 		 	*RamPtr = Val; 
+0354:  BCF    03.5
+0355:  CLRF   23
+0356:  BSF    03.5
+0357:  MOVF   44,W
+0358:  MOVWF  04
+0359:  BCF    03.7
+035A:  BCF    03.5
+035B:  BTFSC  23.0
+035C:  BSF    03.7
+035D:  BSF    03.5
+035E:  MOVF   43,W
+035F:  MOVWF  00
+.................... 	  	cksum ^= Val; 
+0360:  MOVF   43,W
+0361:  XORWF  41,F
+....................       eePtr++; 
+0362:  INCF   3F,F
+....................     } 
+0363:  INCF   3D,F
+0364:  GOTO   340
+.................... 		for(x=1;x<RegInfoSize;x++) { // Process other registers 
+0365:  MOVLW  01
+0366:  MOVWF  3D
+0367:  MOVF   3D,W
+0368:  SUBLW  26
+0369:  BTFSS  03.0
+036A:  GOTO   39D
+.................... 			  // Fetch ROM values into RAM (they may not be good however) 
+.................... 		  	//RamPtr = BASE_PTR + x; 
+.................... 	  		RamPtr = RegInfo[x].ramPtr; 
+036B:  RLF    3D,W
+036C:  BCF    03.5
+036D:  MOVWF  20
+036E:  RLF    20,F
+036F:  MOVLW  FC
+0370:  ANDWF  20,F
+0371:  MOVF   20,W
+0372:  ADDLW  01
+0373:  BSF    03.5
+0374:  MOVWF  46
+0375:  INCF   46,W
+0376:  BCF    03.5
+0377:  CALL   07F
+0378:  MOVWF  23
+0379:  BSF    03.5
+037A:  MOVF   46,W
+037B:  BCF    03.5
+037C:  CALL   07F
+037D:  BSF    03.5
+037E:  MOVWF  44
+....................   			restart_wdt(); 
+037F:  CLRWDT
+....................   			Val = read_eeprom(eePtr); 
+0380:  MOVF   3F,W
+0381:  BCF    03.5
+0382:  BSF    03.6
+0383:  MOVWF  0D
+0384:  BSF    03.5
+0385:  BCF    0C.7
+0386:  BSF    0C.0
+0387:  BCF    03.5
+0388:  MOVF   0C,W
+0389:  BSF    03.5
+038A:  BCF    03.6
+038B:  MOVWF  43
+.................... 		  	*RamPtr = Val; 
+038C:  BCF    03.5
+038D:  CLRF   23
+038E:  BSF    03.5
+038F:  MOVF   44,W
+0390:  MOVWF  04
+0391:  BCF    03.7
+0392:  BCF    03.5
+0393:  BTFSC  23.0
+0394:  BSF    03.7
+0395:  BSF    03.5
+0396:  MOVF   43,W
+0397:  MOVWF  00
+.................... 	  		cksum ^= Val; 
+0398:  MOVF   43,W
+0399:  XORWF  41,F
+....................         eePtr++; 
+039A:  INCF   3F,F
+.................... 		} 
+039B:  INCF   3D,F
+039C:  GOTO   367
+.................... 		cksum ^= EECKSUM; // This should be 0 if EEPROM is clean 
+039D:  MOVF   42,W
+039E:  XORWF  41,F
+.................... 		if ( cksum ) { 
+039F:  MOVF   41,F
+03A0:  BTFSC  03.2
+03A1:  GOTO   3A3
+.................... 			Valid = 0; 
+03A2:  CLRF   40
+.................... 		} 
+.................... 	} 
+.................... 	else { 
+03A3:  GOTO   3A5
+.................... 		Valid = 0; 
+03A4:  CLRF   40
+.................... 	} 
+.................... 	if ( ! Valid ) { // Initialise EEPROM  
+03A5:  MOVF   40,F
+03A6:  BTFSS  03.2
+03A7:  GOTO   44D
+.................... 			AdminPwd[0]     =GET_DEFAULT_VAL(AdminPwd); 
+03A8:  MOVLW  01
+03A9:  BCF    03.5
+03AA:  MOVWF  2F
+.................... 			AdminPwd[1]     =GET_DEFAULT_VAL(AdminPwd1); 
+03AB:  MOVLW  22
+03AC:  MOVWF  30
+.................... 			AdminPwd[2]     =GET_DEFAULT_VAL(AdminPwd2); 
+03AD:  CLRF   31
+.................... 			AdminPwd[3]     =GET_DEFAULT_VAL(AdminPwd3); 
+03AE:  CLRF   32
+.................... 			AdminPwd[4]     =GET_DEFAULT_VAL(AdminPwd4); 
+03AF:  CLRF   33
+.................... 			AdminPwd[5]     =GET_DEFAULT_VAL(AdminPwd5); 
+03B0:  CLRF   34
+.................... 			AdminPwd[6]     =GET_DEFAULT_VAL(AdminPwd6); 
+03B1:  CLRF   35
+.................... 			AdminPwd[7]     =GET_DEFAULT_VAL(AdminPwd7); 
+03B2:  CLRF   36
+.................... 			Enable	        =GET_DEFAULT_VAL(Enable); 
+03B3:  MOVLW  03
+03B4:  MOVWF  37
+.................... 			Polarity	=GET_DEFAULT_VAL(Polarity); 
+03B5:  CLRF   38
+.................... 			RX0PTT		=GET_DEFAULT_VAL(RX0PTT); 
+03B6:  MOVLW  02
+03B7:  MOVWF  39
+.................... 			RX1PTT		=GET_DEFAULT_VAL(RX1PTT); 
+03B8:  MOVLW  03
+03B9:  MOVWF  3A
+.................... 			RX2PTT		=GET_DEFAULT_VAL(RX2PTT); 
+03BA:  CLRF   3B
+.................... 			PWMPTT		=GET_DEFAULT_VAL(PWMPTT); 
+03BB:  MOVWF  3C
+.................... 			DitDelay	=GET_DEFAULT_VAL(DitDelay		); 
+03BC:  MOVLW  06
+03BD:  MOVWF  3D
+.................... 			LinkTimeout     =GET_DEFAULT_VAL(LinkTimeout); 
+03BE:  CLRF   3E
+.................... 			TempLowOp	=GET_DEFAULT_VAL(TempLowOp		); 
+03BF:  CLRF   3F
+.................... 			TempHighOp	=GET_DEFAULT_VAL(TempHighOp		); 
+03C0:  CLRF   40
+.................... 			TempNormOp	=GET_DEFAULT_VAL(TempNormOp		); 
+03C1:  CLRF   41
+.................... 			AuxInAOp	=GET_DEFAULT_VAL(AuxInAOp		); 
+03C2:  CLRF   42
+.................... 			AuxInBOp	=GET_DEFAULT_VAL(AuxInBOp		); 
+03C3:  CLRF   43
+.................... 			PUAuxOutValue	=GET_DEFAULT_VAL(PUAuxOutValue	); 
+03C4:  CLRF   44
+.................... 			SiteID		=GET_DEFAULT_VAL(SiteID		); 
+03C5:  MOVLW  08
+03C6:  MOVWF  45
+.................... 			MaxCorPerMinute =GET_DEFAULT_VAL(MaxCorPerMinute		); 
+03C7:  MOVLW  63
+03C8:  MOVWF  46
+.................... 			SiteIDMorse[0]	=GET_DEFAULT_VAL(SiteIDMorse	); 
+03C9:  MOVLW  1F
+03CA:  MOVWF  47
+.................... 			SiteIDMorse[1]	=GET_DEFAULT_VAL(SiteIDMorse1	); 
+03CB:  MOVLW  0E
+03CC:  MOVWF  48
+.................... 			SiteIDMorse[2]	=GET_DEFAULT_VAL(SiteIDMorse2	); 
+03CD:  MOVLW  02
+03CE:  MOVWF  49
+.................... 			SiteIDMorse[3]	=GET_DEFAULT_VAL(SiteIDMorse3	); 
+03CF:  MOVLW  1B
+03D0:  MOVWF  4A
+.................... 			SiteIDMorse[4]	=GET_DEFAULT_VAL(SiteIDMorse4	); 
+03D1:  MOVLW  0B
+03D2:  MOVWF  4B
+.................... 			SiteIDMorse[5]	=GET_DEFAULT_VAL(SiteIDMorse5	); 
+03D3:  MOVLW  15
+03D4:  MOVWF  4C
+.................... 			TempLow		=GET_DEFAULT_VAL(TempLow	); 
+03D5:  MOVLW  32
+03D6:  MOVWF  4D
+.................... 			TempHigh	=GET_DEFAULT_VAL(TempHigh	); 
+03D7:  MOVLW  44
+03D8:  MOVWF  4E
+.................... 			AuxCfg		=GET_DEFAULT_VAL(AuxCfg		); 
+03D9:  MOVLW  01
+03DA:  MOVWF  4F
+.................... 			EnableMorseIDTx	=GET_DEFAULT_VAL(EnableMorseIDTx); 
+03DB:  MOVLW  02
+03DC:  MOVWF  50
+.................... 			EnableSiteIDTx	=GET_DEFAULT_VAL(EnableSiteIDTx	); 
+03DD:  CLRF   51
+.................... 			PWMAmplitude	=GET_DEFAULT_VAL(PWMAmplitude); 
+03DE:  MOVWF  52
+.................... 			UserFunction1Reg=GET_DEFAULT_VAL(UserFunction1Reg); 
+03DF:  MOVLW  3A
+03E0:  MOVWF  53
+.................... 			UserFunction1Op =GET_DEFAULT_VAL(UserFunction1Op); 
+03E1:  CLRF   54
+.................... 			UserFunction2Reg=GET_DEFAULT_VAL(UserFunction2Reg); 
+03E2:  MOVLW  3B
+03E3:  MOVWF  55
+.................... 			UserFunction2Op =GET_DEFAULT_VAL(UserFunction2Op); 
+03E4:  CLRF   56
+.................... 			UserFunction3Reg=GET_DEFAULT_VAL(UserFunction3Reg); 
+03E5:  MOVLW  3C
+03E6:  MOVWF  57
+.................... 			UserFunction3Op =GET_DEFAULT_VAL(UserFunction3Op); 
+03E7:  CLRF   58
+.................... 			UserFunction4Reg=GET_DEFAULT_VAL(UserFunction4Reg); 
+03E8:  MOVLW  3D
+03E9:  MOVWF  59
+.................... 			UserFunction4Op =GET_DEFAULT_VAL(UserFunction4Op); 
+03EA:  CLRF   5A
+.................... 			PTTTimeout      =GET_DEFAULT_VAL(PTTTimeout); 
+03EB:  MOVLW  08
+03EC:  MOVWF  5B
+.................... 			EEPROM_VALID	=GET_DEFAULT_VAL(EEPROM_VALID   ); 
+03ED:  MOVLW  A5
+03EE:  MOVWF  5C
+.................... 			cksum = 0; 
+03EF:  BSF    03.5
+03F0:  CLRF   41
+.................... 			 
+....................     eePtr=0; 
+03F1:  CLRF   3F
+.................... 		for(x=0;x<RegInfo[0].size;x++) { // Process AdminPwd 
+03F2:  CLRF   3D
+03F3:  MOVF   3D,W
+03F4:  SUBLW  07
+03F5:  BTFSS  03.0
+03F6:  GOTO   413
+.................... 	  	RamPtr = RegInfo[0].ramPtr+x; 
+03F7:  MOVLW  2F
+03F8:  ADDWF  3D,W
+03F9:  MOVWF  44
+.................... 			restart_wdt(); 
+03FA:  CLRWDT
+....................   		Val = *RamPtr; 
+03FB:  BCF    03.5
+03FC:  CLRF   23
+03FD:  BSF    03.5
+03FE:  MOVF   44,W
+03FF:  MOVWF  04
+0400:  BCF    03.7
+0401:  BCF    03.5
+0402:  BTFSC  23.0
+0403:  BSF    03.7
+0404:  MOVF   00,W
+0405:  BSF    03.5
+0406:  MOVWF  43
+....................   		write_ee(eePtr,Val); // Store Default value in EEPROM 
+0407:  MOVF   3F,W
+0408:  MOVWF  49
+0409:  MOVF   43,W
+040A:  MOVWF  4A
+040B:  BCF    03.5
+040C:  CALL   2FC
+....................   		cksum ^= Val; 
+040D:  BSF    03.5
+040E:  MOVF   43,W
+040F:  XORWF  41,F
+....................       eePtr++; 
+0410:  INCF   3F,F
+....................     } 
+0411:  INCF   3D,F
+0412:  GOTO   3F3
+.................... 		for(x=1;x<RegInfoSize;x++) { 
+0413:  MOVLW  01
+0414:  MOVWF  3D
+0415:  MOVF   3D,W
+0416:  SUBLW  26
+0417:  BTFSS  03.0
+0418:  GOTO   446
+.................... 		  // Fetch ROM values into RAM (they may not be good however) 
+.................... 		 	//RamPtr = BASE_PTR + x; 
+.................... 	  	RamPtr = RegInfo[x].ramPtr; 
+0419:  RLF    3D,W
+041A:  BCF    03.5
+041B:  MOVWF  20
+041C:  RLF    20,F
+041D:  MOVLW  FC
+041E:  ANDWF  20,F
+041F:  MOVF   20,W
+0420:  ADDLW  01
+0421:  BSF    03.5
+0422:  MOVWF  46
+0423:  INCF   46,W
+0424:  BCF    03.5
+0425:  CALL   07F
+0426:  MOVWF  23
+0427:  BSF    03.5
+0428:  MOVF   46,W
+0429:  BCF    03.5
+042A:  CALL   07F
+042B:  BSF    03.5
+042C:  MOVWF  44
+.................... 		  restart_wdt(); 
+042D:  CLRWDT
+....................   		Val = *RamPtr; 
+042E:  BCF    03.5
+042F:  CLRF   23
+0430:  BSF    03.5
+0431:  MOVF   44,W
+0432:  MOVWF  04
+0433:  BCF    03.7
+0434:  BCF    03.5
+0435:  BTFSC  23.0
+0436:  BSF    03.7
+0437:  MOVF   00,W
+0438:  BSF    03.5
+0439:  MOVWF  43
+....................   		write_ee(eePtr,Val); // Store Default value in EEPROM 
+043A:  MOVF   3F,W
+043B:  MOVWF  49
+043C:  MOVF   43,W
+043D:  MOVWF  4A
+043E:  BCF    03.5
+043F:  CALL   2FC
+....................   		cksum ^= Val; 
+0440:  BSF    03.5
+0441:  MOVF   43,W
+0442:  XORWF  41,F
+....................       eePtr++; 
+0443:  INCF   3F,F
+.................... 		} 
+0444:  INCF   3D,F
+0445:  GOTO   415
+.................... 		write_ee(EEPROM_CKSUM,cksum); 
+0446:  MOVLW  FF
+0447:  MOVWF  49
+0448:  MOVF   41,W
+0449:  MOVWF  4A
+044A:  BCF    03.5
+044B:  CALL   2FC
+044C:  BSF    03.5
+.................... 	} 
+....................  
+.................... } // }}} 
+044D:  BCF    03.5
+044E:  RETLW  00
+.................... // Function init (void) {{{ 
+.................... //======================== 
+.................... //Function : init 
+.................... //Inputs	 : None 
+.................... //Outputs	 : None 
+.................... // 
+.................... //This function performs various chip initialisations: 
+.................... //PWM 
+.................... //INPUTS 
+.................... //OUTPUTS 
+.................... //  =========================  
+.................... void init (void) {  
+.................... 	// Setup TIMER0 as the main delay counter 
+.................... 	//OPTION = 0b0111;	// prescale by 256 
+.................... 	//	RABPU  = 1;		// Disable RA and RB pullups 
+.................... 	//	T0CS   = 0;		// select internal clock 
+.................... 	setup_timer_0 (RTCC_DIV_256|RTCC_INTERNAL); 
+*
+0474:  BSF    03.5
+0475:  MOVF   01,W
+0476:  ANDLW  C0
+0477:  IORLW  07
+0478:  MOVWF  01
+.................... 	set_timer0(0); 
+0479:  BCF    03.5
+047A:  CLRF   01
+.................... 	enable_interrupts(INT_RTCC); 
+047B:  BSF    0B.5
+.................... 	// 
+.................... 	// Setup ADC 
+.................... 	// 
+.................... 	setup_adc(ADC_CLOCK_INTERNAL); 
+047C:  BSF    03.5
+047D:  BSF    1F.4
+047E:  BSF    1F.5
+047F:  BCF    1F.6
+0480:  BCF    03.5
+0481:  BSF    1F.7
+0482:  BSF    1F.0
+.................... 	setup_adc_ports ( sAN9 ); 
+0483:  BSF    03.6
+0484:  BCF    1F.0
+0485:  BSF    1F.1
+0486:  BCF    1F.2
+0487:  BCF    1F.3
+0488:  BCF    03.6
+0489:  BCF    1F.6
+048A:  MOVLW  00
+048B:  BSF    03.6
+048C:  MOVWF  1E
+.................... 	set_adc_channel ( 9 ); 
+048D:  MOVLW  24
+048E:  BCF    03.6
+048F:  MOVWF  21
+0490:  MOVF   1F,W
+0491:  ANDLW  C3
+0492:  IORWF  21,W
+0493:  MOVWF  1F
+.................... 	enable_interrupts(INT_AD); 
+0494:  BSF    03.5
+0495:  BSF    0C.6
+.................... 	setup_wdt(WDT_ON | WDT_TIMES_128); 
+0496:  MOVLW  17
+0497:  MOVWF  17
+0498:  BTFSS  01.3
+0499:  GOTO   49D
+049A:  BCF    01.0
+049B:  BCF    01.1
+049C:  BCF    01.2
+.................... 	//setup_wdt(WDT_ON); 
+.................... 	set_tris_c(0b010001000); 
+049D:  MOVLW  88
+049E:  MOVWF  07
+.................... 	eeprom_init_check(); // Initialise RAM variables 
+049F:  BCF    03.5
+04A0:  CALL   31E
+.................... 	PWMPtr = 0; 
+04A1:  CLRF   60
+.................... 	ClearDTMFSeq(); 
+04A2:  CALL   44F
+.................... 	COR_Per_Minute = 0; 
+04A3:  BSF    03.5
+04A4:  CLRF   28
+.................... 	STATE = IDLE; 
+04A5:  CLRF   20
+.................... 	AdminPtt = 0x00; 
+04A6:  CLRF   25
+.................... 	DiagTailPTT=0; 
+04A7:  BCF    03.5
+04A8:  CLRF   5E
+.................... 	set_tris_a(0x1F); 
+04A9:  MOVLW  1F
+04AA:  BSF    03.5
+04AB:  MOVWF  05
+.................... 	set_tris_b(0xE0); 
+04AC:  MOVLW  E0
+04AD:  MOVWF  06
+.................... 	AuxInTailChar = 0; 
+04AE:  CLRF   23
+.................... 	if(AuxCfg & 0x01) { 
+04AF:  BCF    03.5
+04B0:  BTFSS  4F.0
+04B1:  GOTO   4B6
+.................... 		SET_AUX1_INPUT; 
+04B2:  BSF    03.5
+04B3:  BSF    05.5
+.................... 	} 
+.................... 	else { 
+04B4:  GOTO   4B8
+04B5:  BCF    03.5
+.................... 		SET_AUX1_OUTPUT; 
+04B6:  BSF    03.5
+04B7:  BCF    06.4
+.................... 	} 
+.................... 	if(AuxCfg & 0x02) { 
+04B8:  BCF    03.5
+04B9:  BTFSS  4F.1
+04BA:  GOTO   4BF
+.................... 		SET_AUX2_INPUT; 
+04BB:  BSF    03.5
+04BC:  BSF    06.4
+.................... 	} 
+.................... 	else { 
+04BD:  GOTO   4C1
+04BE:  BCF    03.5
+.................... 		SET_AUX2_OUTPUT; 
+04BF:  BSF    03.5
+04C0:  BCF    05.5
+.................... 	} 
+.................... 	AuxOut = PUAuxOutValue; 
+04C1:  BCF    03.5
+04C2:  MOVF   44,W
+04C3:  BSF    03.5
+04C4:  MOVWF  24
+....................   ClearDTMFFlag = 0; 
+04C5:  BCF    03.5
+04C6:  BCF    6A.5
+.................... 	// PWM Configuration 
+.................... 	// Setting P1A,P1B,P1C,P1D are active high 
+.................... 	setup_ccp1(CCP_PWM | CCP_PULSE_STEERING_C,CCP_PWM_H_H ); 
+04C7:  BCF    07.5
+04C8:  MOVLW  0C
+04C9:  MOVWF  17
+04CA:  MOVWF  1C
+04CB:  MOVLW  04
+04CC:  BSF    03.5
+04CD:  BSF    03.6
+04CE:  MOVWF  1D
+.................... 	setup_timer_2(T2_DISABLED,TIMER2_PERIOD,1); // period = 125, post-scale = 1 
+04CF:  MOVLW  00
+04D0:  BCF    03.5
+04D1:  BCF    03.6
+04D2:  MOVWF  21
+04D3:  MOVWF  12
+04D4:  MOVLW  7D
+04D5:  BSF    03.5
+04D6:  MOVWF  12
+.................... 	// PWM Period = [(PR2)+1]*4*TOSC*(TMR2 prescale value) 
+.................... 	// PWM Duty Cycle = (CCPR1L:CCP1CON<5:4>) * TOSC * (TMR2 prescale value) 
+.................... 	// Initialise aux outputs 
+.................... 	//SetAuxCfg(); 
+.................... 	PWM_ACTIVE = 0; 
+04D7:  BCF    03.5
+04D8:  BCF    6A.6
+.................... 	TXMorseID = 1; // Transmit station morse ID on power-up 
+04D9:  BSF    6A.1
+.................... 	hr_2 = SITE_ID_TX_DELAY;  
+04DA:  MOVLW  1E
+04DB:  MOVWF  67
+.................... 	min = 1831; 
+04DC:  MOVLW  07
+04DD:  MOVWF  66
+04DE:  MOVLW  27
+04DF:  MOVWF  65
+.................... 	enable_interrupts(INT_RB5|INT_RB6|INT_RB7);  
+04E0:  BSF    0B.3
+04E1:  MOVLW  E0
+04E2:  BSF    03.6
+04E3:  IORWF  16,F
+.................... 	enable_interrupts(INT_RA4); 
+04E4:  BCF    03.6
+04E5:  BSF    0B.3
+04E6:  BSF    03.5
+04E7:  BSF    16.4
+.................... 	enable_interrupts(GLOBAL); 
+04E8:  MOVLW  C0
+04E9:  BCF    03.5
+04EA:  IORWF  0B,F
+.................... } // }}} 
+04EB:  BSF    0A.3
+04EC:  GOTO   2E3 (RETURN)
+.................... void main (void) { // {{{ 
+*
+0AC3:  CLRF   04
+0AC4:  BCF    03.7
+0AC5:  MOVLW  1F
+0AC6:  ANDWF  03,F
+0AC7:  MOVLW  71
+0AC8:  BSF    03.5
+0AC9:  MOVWF  0F
+0ACA:  MOVF   0F,W
+0ACB:  BCF    03.5
+0ACC:  BSF    03.6
+0ACD:  BCF    1F.0
+0ACE:  BCF    1F.1
+0ACF:  BCF    1F.2
+0AD0:  BCF    1F.3
+0AD1:  BCF    03.6
+0AD2:  BCF    1F.6
+0AD3:  MOVLW  00
+0AD4:  BSF    03.6
+0AD5:  MOVWF  1E
+0AD6:  CLRF   19
+0AD7:  CLRF   1A
+0AD8:  BSF    03.5
+0AD9:  CLRF   1E
+0ADA:  BCF    03.5
+0ADB:  CLRF   1B
+0ADC:  BCF    03.6
+0ADD:  BCF    0D.5
+.................... 	int x; 
+.................... //	int MorsePTT; 
+.................... 	int1 MorseTransmit; 
+.................... 	init(); 
+*
+0AE0:  BCF    0A.3
+0AE1:  BCF    03.5
+0AE2:  GOTO   474
+0AE3:  BSF    0A.3
+....................  
+....................    	// Main loop	 
+.................... #ignore_warnings 203 
+.................... 		while(1) { 
+.................... #ignore_warnings NONE 
+.................... 		restart_wdt(); 
+0AE4:  CLRWDT
+0AE5:  CLRF   2E
+0AE6:  BTFSC  0B.7
+0AE7:  BSF    2E.7
+0AE8:  BCF    0B.7
+.................... 		// Check COR_IN inputs 
+.................... 		ProcessCorInPort();  
+0AE9:  BCF    0A.3
+0AEA:  CALL   1BB
+0AEB:  BSF    0A.3
+0AEC:  BTFSC  2E.7
+0AED:  BSF    0B.7
+.................... 		restart_wdt(); 
+0AEE:  CLRWDT
+....................     if ( ClearDTMFFlag ) { 
+0AEF:  BTFSS  6A.5
+0AF0:  GOTO   2F5
+....................       ClearDTMFSeq(); 
+0AF1:  BCF    0A.3
+0AF2:  CALL   44F
+0AF3:  BSF    0A.3
+....................       ClearDTMFFlag = 0; 
+0AF4:  BCF    6A.5
+....................     } 
+.................... 		if (DTMF.Strobe) { 
+0AF5:  BTFSS  68.4
+0AF6:  GOTO   73C
+.................... 			processUserFunctions(DTMF.Key); 
+0AF7:  MOVF   68,W
+0AF8:  ANDLW  0F
+0AF9:  BSF    03.5
+0AFA:  MOVWF  31
+0AFB:  MOVWF  32
+0AFC:  BCF    0A.3
+0AFD:  BCF    03.5
+0AFE:  GOTO   6AA
+0AFF:  BSF    0A.3
+.................... 			if (DTMF.Key == ds) { 
+0B00:  MOVF   68,W
+0B01:  ANDLW  0F
+0B02:  SUBLW  0B
+0B03:  BTFSS  03.2
+0B04:  GOTO   30C
+.................... 				ClearDTMFSeq(); 
+0B05:  BCF    0A.3
+0B06:  CALL   44F
+0B07:  BSF    0A.3
+.................... 				PoundChars=0x00; 
+0B08:  BSF    03.5
+0B09:  CLRF   2B
+.................... 			} 
+.................... 			else { 
+0B0A:  GOTO   316
+0B0B:  BCF    03.5
+.................... 				ProcessDTMF(DTMF.Key); 
+0B0C:  MOVF   68,W
+0B0D:  ANDLW  0F
+0B0E:  BSF    03.5
+0B0F:  MOVWF  31
+0B10:  MOVWF  32
+0B11:  BCF    0A.3
+0B12:  BCF    03.5
+0B13:  GOTO   71A
+0B14:  BSF    0A.3
+0B15:  BSF    03.5
+.................... 			} 
+.................... 			if(DTMF.Key == dp) { 
+0B16:  BCF    03.5
+0B17:  MOVF   68,W
+0B18:  ANDLW  0F
+0B19:  SUBLW  0C
+0B1A:  BTFSS  03.2
+0B1B:  GOTO   73B
+.................... 				DTMFStates(); 
+.................... 			} 
+.................... 			DTMF.Strobe = 0; 
+*
+0F3B:  BCF    68.4
+.................... 		} 
+.................... 		restart_wdt(); 
+0F3C:  CLRWDT
+.................... 		// Check Temperature and AuxIn control 
+.................... 		TempCtrl(); 
+0F3D:  GOTO   1C7
+.................... 		restart_wdt(); 
+0F3E:  CLRWDT
+.................... 		// TXMorseID values: 
+.................... 		// 0 -- No Morse ID transmission 
+.................... 		// 1 -- Always transmit Morse ID  
+.................... 		// 2 -- Transmit Morse ID when repeater is disabled 
+.................... 		if ( TXMorseID ) { 
+0F3F:  BTFSS  6A.1
+0F40:  GOTO   798
+.................... 			MorseTransmit = 0; 
+0F41:  BSF    03.5
+0F42:  BCF    30.0
+.................... 			if ( (EnableMorseIDTx & 0x01) || ((EnableMorseIDTx & 0x02) && ((Enable & 0x01) == 0x00)  ) ) { 
+0F43:  BCF    03.5
+0F44:  BTFSC  50.0
+0F45:  GOTO   74C
+0F46:  BTFSS  50.1
+0F47:  GOTO   75A
+0F48:  MOVF   37,W
+0F49:  ANDLW  01
+0F4A:  BTFSS  03.2
+0F4B:  GOTO   75A
+.................... 				PWMPTT = read_eeprom(GET_EEPROM_PTR(PWMPTT)); 
+0F4C:  MOVLW  0D
+0F4D:  BSF    03.6
+0F4E:  MOVWF  0D
+0F4F:  BSF    03.5
+0F50:  BCF    0C.7
+0F51:  BSF    0C.0
+0F52:  BCF    03.5
+0F53:  MOVF   0C,W
+0F54:  BCF    03.6
+0F55:  MOVWF  3C
+.................... 				MorseTransmit = 1; 
+0F56:  BSF    03.5
+0F57:  BSF    30.0
+.................... 			} else { 
+0F58:  GOTO   767
+0F59:  BCF    03.5
+.................... 			  if ( EnableMorseIDTx & 0xF0 ) { 
+0F5A:  MOVF   50,W
+0F5B:  ANDLW  F0
+0F5C:  BTFSC  03.2
+0F5D:  GOTO   768
+.................... 			// Transmit morse every 30 mins on selected radios 
+.................... 			// TXMorseID 6 5 4 3 2 1 0 
+.................... 			//           | | |     | |-> On/Off 
+.................... 			//           | | |     |---> TX when Link radio is Off 
+.................... 			//           | | |---------> Override setting --> Send every 1/2 hr  
+.................... 					PWMPTT = ((EnableMorseIDTx >> 4) & 0x07); 
+0F5E:  SWAPF  50,W
+0F5F:  MOVWF  20
+0F60:  MOVLW  0F
+0F61:  ANDWF  20,F
+0F62:  MOVF   20,W
+0F63:  ANDLW  07
+0F64:  MOVWF  3C
+.................... 					MorseTransmit = 1; 
+0F65:  BSF    03.5
+0F66:  BSF    30.0
+0F67:  BCF    03.5
+.................... 			  } 
+.................... 			} 
+.................... 			if ( MorseTransmit ) { 
+0F68:  BSF    03.5
+0F69:  BTFSS  30.0
+0F6A:  GOTO   796
+.................... 				// Transmit Morse ID 
+.................... 				morseStart(NOWAIT); 
+0F6B:  CLRF   3D
+0F6C:  BCF    03.5
+0F6D:  CALL   000
+.................... 				for (x=0;x<6;x++) { 
+0F6E:  BSF    03.5
+0F6F:  CLRF   2F
+0F70:  MOVF   2F,W
+0F71:  SUBLW  05
+0F72:  BTFSS  03.0
+0F73:  GOTO   786
+.................... 					morse(SiteIDMorse[x]); 
+0F74:  MOVLW  47
+0F75:  ADDWF  2F,W
+0F76:  MOVWF  04
+0F77:  BCF    03.7
+0F78:  MOVF   00,W
+0F79:  MOVWF  31
+0F7A:  MOVWF  41
+0F7B:  BCF    0A.3
+0F7C:  BCF    03.5
+0F7D:  CALL   7BE
+0F7E:  BSF    0A.3
+.................... 					MORSE_WORD_DELAY; 
+0F7F:  BCF    0A.3
+0F80:  CALL   7D2
+0F81:  BSF    0A.3
+.................... 					restart_wdt(); 
+0F82:  CLRWDT
+.................... 				} 
+0F83:  BSF    03.5
+0F84:  INCF   2F,F
+0F85:  GOTO   770
+.................... 				morseStop(); 
+0F86:  BCF    0A.3
+0F87:  BCF    03.5
+0F88:  CALL   7E7
+0F89:  BSF    0A.3
+.................... 				PWMPTT = read_eeprom(GET_EEPROM_PTR(PWMPTT)); 
+0F8A:  MOVLW  0D
+0F8B:  BSF    03.6
+0F8C:  MOVWF  0D
+0F8D:  BSF    03.5
+0F8E:  BCF    0C.7
+0F8F:  BSF    0C.0
+0F90:  BCF    03.5
+0F91:  MOVF   0C,W
+0F92:  BCF    03.6
+0F93:  MOVWF  3C
+.................... 				MorseTransmit = 0; 
+0F94:  BSF    03.5
+0F95:  BCF    30.0
+.................... 			} 
+.................... 			TXMorseID = 0; 
+0F96:  BCF    03.5
+0F97:  BCF    6A.1
+.................... 		} 
+.................... 		restart_wdt(); 
+0F98:  CLRWDT
+.................... 		// Transmit SiteID on tail. This is used for diagnostic 
+.................... 		if ( Tail ) { 
+0F99:  BTFSS  6A.3
+0F9A:  GOTO   7BD
+.................... 			morseStart(NOWAIT); 
+0F9B:  BSF    03.5
+0F9C:  CLRF   3D
+0F9D:  BCF    03.5
+0F9E:  CALL   000
+.................... 			if ( AuxInTail ) { // Transmit AuxIn tail before siteID 
+0F9F:  BTFSS  6A.7
+0FA0:  GOTO   7AC
+.................... 				morse(AuxInTailChar); // This is either 0 or 1 
+0FA1:  BSF    03.5
+0FA2:  MOVF   23,W
+0FA3:  MOVWF  41
+0FA4:  BCF    0A.3
+0FA5:  BCF    03.5
+0FA6:  CALL   7BE
+0FA7:  BSF    0A.3
+.................... 				MORSE_WORD_DELAY; 
+0FA8:  BCF    0A.3
+0FA9:  CALL   7D2
+0FAA:  BSF    0A.3
+.................... 				AuxInTail = 0; 
+0FAB:  BCF    6A.7
+.................... 			} 
+.................... 			if (DiagTail) { 
+0FAC:  BTFSS  6A.4
+0FAD:  GOTO   7B6
+....................                 // Send a long "BEEP"  
+.................... 	 		    morse(MCHAR('t')); 
+0FAE:  MOVLW  1D
+0FAF:  BSF    03.5
+0FB0:  MOVWF  41
+0FB1:  BCF    0A.3
+0FB2:  BCF    03.5
+0FB3:  CALL   7BE
+0FB4:  BSF    0A.3
+.................... //	 		    morse(SiteID); 
+.................... 			    DiagTail=0; 
+0FB5:  BCF    6A.4
+....................                         } 
+....................             		MORSE_WORD_DELAY; 
+0FB6:  BCF    0A.3
+0FB7:  CALL   7D2
+0FB8:  BSF    0A.3
+.................... 			Tail = 0; // Clear Tail bit 
+0FB9:  BCF    6A.3
+.................... 			morseStop(); 
+0FBA:  BCF    0A.3
+0FBB:  CALL   7E7
+0FBC:  BSF    0A.3
+.................... 		} 
+.................... 	} 
+0FBD:  GOTO   2E4
+.................... } // }}} 
+.................... void TransmitDigit(signed int digit) { // {{{ 
+.................... 	int idigit; 
+0FBE:  SLEEP
+.................... 	int dizaine; 
+.................... 	 
+.................... 	if ( digit < 0 ) { 
+*
+099D:  BSF    03.5
+099E:  BTFSS  3E.7
+099F:  GOTO   1AB
+.................... 		morse('n'-'a'+10); // Transmit 'n' for negative 
+09A0:  MOVLW  17
+09A1:  MOVWF  41
+09A2:  BCF    0A.3
+09A3:  BCF    03.5
+09A4:  CALL   7BE
+09A5:  BSF    0A.3
+.................... 		idigit = -digit; 
+09A6:  BSF    03.5
+09A7:  MOVF   3E,W
+09A8:  SUBLW  00
+09A9:  MOVWF  3F
+.................... 	} else { 
+09AA:  GOTO   1AD
+.................... 		idigit = digit; 
+09AB:  MOVF   3E,W
+09AC:  MOVWF  3F
+.................... 	}	 
+.................... 	// Send  
+.................... 	dizaine=0; 
+09AD:  CLRF   40
+.................... 	while( idigit > 9 ) { 
+09AE:  MOVF   3F,W
+09AF:  SUBLW  09
+09B0:  BTFSC  03.0
+09B1:  GOTO   1B6
+.................... 		idigit=idigit-10; 
+09B2:  MOVLW  0A
+09B3:  SUBWF  3F,F
+.................... 		dizaine++; 
+09B4:  INCF   40,F
+.................... 	} 
+09B5:  GOTO   1AE
+.................... 	// Send remainder 
+.................... 	if ( dizaine ) { 
+09B6:  MOVF   40,F
+09B7:  BTFSC  03.2
+09B8:  GOTO   1C0
+.................... 		morse(dizaine); 
+09B9:  MOVF   40,W
+09BA:  MOVWF  41
+09BB:  BCF    0A.3
+09BC:  BCF    03.5
+09BD:  CALL   7BE
+09BE:  BSF    0A.3
+09BF:  BSF    03.5
+.................... 	} 
+.................... 	morse(idigit); 
+09C0:  MOVF   3F,W
+09C1:  MOVWF  41
+09C2:  BCF    0A.3
+09C3:  BCF    03.5
+09C4:  CALL   7BE
+09C5:  BSF    0A.3
+.................... } // }}} 
+09C6:  RETLW  00
+....................  
+.................... void ClearDTMFSeq(void) { // {{{ 
+.................... 	char x; 
+.................... 	for(x=0;x<DTMFSeqSize;x++) { 
+*
+044F:  BSF    03.5
+0450:  CLRF   33
+0451:  MOVF   33,W
+0452:  SUBLW  0D
+0453:  BTFSS  03.0
+0454:  GOTO   468
+.................... 		DTMFSeq[x].Key = 0x00; 
+0455:  MOVLW  6D
+0456:  ADDWF  33,W
+0457:  MOVWF  04
+0458:  BCF    03.7
+0459:  MOVLW  F0
+045A:  ANDWF  00,W
+045B:  MOVWF  00
+.................... 		DTMFSeq[x].Last = 0; 
+045C:  MOVLW  6D
+045D:  ADDWF  33,W
+045E:  MOVWF  04
+045F:  BCF    03.7
+0460:  BCF    00.5
+.................... 		DTMFSeq[x].Strobe = 0; 
+0461:  MOVLW  6D
+0462:  ADDWF  33,W
+0463:  MOVWF  04
+0464:  BCF    03.7
+0465:  BCF    00.4
+.................... 	} 
+0466:  INCF   33,F
+0467:  GOTO   451
+.................... 	DTMFPtr = &DTMFSeq[0]; 
+0468:  CLRF   7C
+0469:  MOVLW  6D
+046A:  MOVWF  7B
+.................... 	LastDTMF = NULL; 
+046B:  CLRF   7E
+046C:  CLRF   7D
+.................... 	DTMF.Key = 0x00; 
+046D:  MOVLW  F0
+046E:  BCF    03.5
+046F:  ANDWF  68,W
+0470:  MOVWF  68
+.................... 	DTMF.Last = 0; 
+0471:  BCF    68.5
+.................... 	DTMF.Strobe = 0; 
+0472:  BCF    68.4
+.................... }	// }}} 
+0473:  RETLW  00
+.................... void StartPWM(int div) { // {{{ 
+.................... 	bit COR_ON; 
+.................... 	PWMDiv = div; 
+*
+0607:  BSF    03.5
+0608:  MOVF   47,W
+0609:  BCF    03.5
+060A:  MOVWF  61
+.................... 	PWMDivCnt = div; 
+060B:  BSF    03.5
+060C:  MOVF   47,W
+060D:  BCF    03.5
+060E:  MOVWF  62
+.................... //	CCP1CON = CCP_PWM_MODE | CCP_PWM_HH;	 
+.................... 	disable_interrupts(INT_RTCC); 
+060F:  BCF    0B.5
+.................... 	setup_timer_2(T2_DIV_BY_1,TIMER2_PERIOD,1); // period = 125, post-scale = 1 
+0610:  MOVLW  00
+0611:  MOVWF  21
+0612:  IORLW  04
+0613:  MOVWF  12
+0614:  MOVLW  7D
+0615:  BSF    03.5
+0616:  MOVWF  12
+.................... 	enable_interrupts(INT_TIMER2); 
+0617:  BSF    0C.1
+.................... 	// Cut the PWM by half when a COR is enabled 
+.................... 	output_drive(PIN_C3); 
+0618:  BCF    07.3
+.................... 	COR_ON = ((int8)COR !=0); 
+0619:  BCF    48.0
+061A:  MOVF   2C,F
+061B:  BTFSS  03.2
+061C:  BSF    48.0
+.................... 	if ( COR_ON ) { 
+061D:  BTFSS  48.0
+061E:  GOTO   62E
+.................... 		PWMAmplitude = (read_eeprom(GET_EEPROM_PTR(PWMAmplitude))-1) & 0x07; 
+061F:  MOVLW  23
+0620:  BCF    03.5
+0621:  BSF    03.6
+0622:  MOVWF  0D
+0623:  BSF    03.5
+0624:  BCF    0C.7
+0625:  BSF    0C.0
+0626:  BCF    03.5
+0627:  MOVF   0C,W
+0628:  ADDLW  FF
+0629:  ANDLW  07
+062A:  BCF    03.6
+062B:  MOVWF  52
+.................... 	    //output_float(PIN_C3); 
+.................... 	} else { 
+062C:  GOTO   639
+062D:  BSF    03.5
+.................... 		PWMAmplitude = read_eeprom(GET_EEPROM_PTR(PWMAmplitude)); 
+062E:  MOVLW  23
+062F:  BCF    03.5
+0630:  BSF    03.6
+0631:  MOVWF  0D
+0632:  BSF    03.5
+0633:  BCF    0C.7
+0634:  BSF    0C.0
+0635:  BCF    03.5
+0636:  MOVF   0C,W
+0637:  BCF    03.6
+0638:  MOVWF  52
+....................   	    //output_drive(PIN_C3); 
+.................... 	} 
+.................... }	// }}} 
+0639:  RETLW  00
+.................... void StopPWM(void) { // {{{ 
+.................... 	setup_timer_2(T2_DISABLED,TIMER2_PERIOD,1); // period = 125, post-scale = 1 
+063A:  MOVLW  00
+063B:  MOVWF  21
+063C:  MOVWF  12
+063D:  MOVLW  7D
+063E:  BSF    03.5
+063F:  MOVWF  12
+.................... 	setup_ccp1(CCP_OFF|CCP_PULSE_STEERING_C,CCP_PWM_H_H); 
+0640:  BCF    03.5
+0641:  CLRF   17
+0642:  CLRF   17
+0643:  MOVLW  0C
+0644:  MOVWF  1C
+0645:  MOVLW  04
+0646:  BSF    03.5
+0647:  BSF    03.6
+0648:  MOVWF  1D
+.................... 	disable_interrupts(INT_TIMER2); 
+0649:  BCF    03.6
+064A:  BCF    0C.1
+.................... 	enable_interrupts(INT_RTCC); 
+064B:  BCF    03.5
+064C:  BSF    0B.5
+.................... 	output_float(PIN_C3); 
+064D:  BSF    03.5
+064E:  BSF    07.3
+.................... }	// }}} 
+064F:  BCF    03.5
+0650:  RETLW  00
+.................... void ClearWord(int reg ) { // {{{ 
+.................... 	int8 * w; 
+.................... 	int8 eePtr,EECKSUM; 
+....................  
+.................... 	w = RegInfo[reg].ramPtr; 
+.................... 	eePtr = RegInfo[reg].ptr; 
+.................... 	// Update EEPROM Ckecksum 
+.................... 	EECKSUM = read_eeprom(EEPROM_CKSUM); 
+.................... 	EECKSUM ^= read_eeprom(eePtr); 
+.................... 	write_ee(EEPROM_CKSUM,EECKSUM); 
+.................... 	*w = 0x00; 
+.................... 	write_ee(eePtr,0x00); 
+.................... }	// }}} 
+.................... void SetWord(int reg,int arg ) { // {{{ 
+.................... 	int8 * w; 
+.................... 	int8 eePtr,EECKSUM; 
+.................... 	w = RegInfo[reg].ramPtr; 
+*
+093B:  BSF    03.5
+093C:  RLF    3F,W
+093D:  BCF    03.5
+093E:  MOVWF  20
+093F:  RLF    20,F
+0940:  MOVLW  FC
+0941:  ANDWF  20,F
+0942:  MOVF   20,W
+0943:  ADDLW  01
+0944:  BSF    03.5
+0945:  MOVWF  46
+0946:  INCF   46,W
+0947:  BCF    0A.3
+0948:  BCF    03.5
+0949:  CALL   07F
+094A:  BSF    0A.3
+094B:  MOVWF  23
+094C:  BSF    03.5
+094D:  MOVF   46,W
+094E:  BCF    0A.3
+094F:  BCF    03.5
+0950:  CALL   07F
+0951:  BSF    0A.3
+0952:  BSF    03.5
+0953:  MOVWF  41
+0954:  BCF    03.5
+0955:  MOVF   23,W
+0956:  BSF    03.5
+0957:  MOVWF  42
+.................... 	eePtr = RegInfo[reg].ptr; 
+0958:  RLF    3F,W
+0959:  BCF    03.5
+095A:  MOVWF  20
+095B:  RLF    20,F
+095C:  MOVLW  FC
+095D:  ANDWF  20,F
+095E:  MOVF   20,W
+095F:  BCF    0A.3
+0960:  CALL   07F
+0961:  BSF    0A.3
+0962:  MOVWF  21
+0963:  BSF    03.5
+0964:  MOVWF  43
+.................... 	// Update EEPROM Ckecksum 
+.................... 	EECKSUM = read_eeprom(EEPROM_CKSUM); 
+0965:  MOVLW  FF
+0966:  BCF    03.5
+0967:  BSF    03.6
+0968:  MOVWF  0D
+0969:  BSF    03.5
+096A:  BCF    0C.7
+096B:  BSF    0C.0
+096C:  BCF    03.5
+096D:  MOVF   0C,W
+096E:  BSF    03.5
+096F:  BCF    03.6
+0970:  MOVWF  44
+.................... 	EECKSUM ^= read_eeprom(eePtr) ^ arg; 
+0971:  MOVF   43,W
+0972:  BCF    03.5
+0973:  BSF    03.6
+0974:  MOVWF  0D
+0975:  BSF    03.5
+0976:  BCF    0C.7
+0977:  BSF    0C.0
+0978:  BCF    03.5
+0979:  MOVF   0C,W
+097A:  BSF    03.5
+097B:  BCF    03.6
+097C:  XORWF  40,W
+097D:  XORWF  44,F
+.................... 	write_ee(EEPROM_CKSUM,EECKSUM); 
+097E:  MOVLW  FF
+097F:  MOVWF  49
+0980:  MOVF   44,W
+0981:  MOVWF  4A
+0982:  BCF    0A.3
+0983:  BCF    03.5
+0984:  CALL   2FC
+0985:  BSF    0A.3
+....................  
+.................... 	*w = arg; 
+0986:  BSF    03.5
+0987:  MOVF   42,W
+0988:  BCF    03.5
+0989:  MOVWF  23
+098A:  BSF    03.5
+098B:  MOVF   41,W
+098C:  MOVWF  04
+098D:  BCF    03.7
+098E:  BCF    03.5
+098F:  BTFSC  23.0
+0990:  BSF    03.7
+0991:  BSF    03.5
+0992:  MOVF   40,W
+0993:  MOVWF  00
+.................... 	write_ee(eePtr,arg); 
+0994:  MOVF   43,W
+0995:  MOVWF  49
+0996:  MOVF   40,W
+0997:  MOVWF  4A
+0998:  BCF    0A.3
+0999:  BCF    03.5
+099A:  CALL   2FC
+099B:  BSF    0A.3
+.................... } // }}} 
+099C:  RETLW  00
+.................... void SetArray(int reg,sDTMF * arg) { // {{{ 
+.................... 	int8 * w; 
+.................... 	int x,eePtr,EECKSUM; 
+.................... 	int1 done; 
+.................... 	sDTMF wreg; 
+.................... 	int num; 
+.................... 	 
+.................... 	w = RegInfo[reg].ramPtr; 
+*
+0CC0:  RLF    3D,W
+0CC1:  BCF    03.5
+0CC2:  MOVWF  20
+0CC3:  RLF    20,F
+0CC4:  MOVLW  FC
+0CC5:  ANDWF  20,F
+0CC6:  MOVF   20,W
+0CC7:  ADDLW  01
+0CC8:  BSF    03.5
+0CC9:  MOVWF  49
+0CCA:  INCF   49,W
+0CCB:  BCF    0A.3
+0CCC:  BCF    03.5
+0CCD:  CALL   07F
+0CCE:  BSF    0A.3
+0CCF:  MOVWF  23
+0CD0:  BSF    03.5
+0CD1:  MOVF   49,W
+0CD2:  BCF    0A.3
+0CD3:  BCF    03.5
+0CD4:  CALL   07F
+0CD5:  BSF    0A.3
+0CD6:  BSF    03.5
+0CD7:  MOVWF  40
+0CD8:  BCF    03.5
+0CD9:  MOVF   23,W
+0CDA:  BSF    03.5
+0CDB:  MOVWF  41
+.................... 	eePtr = RegInfo[reg].ptr; 
+0CDC:  RLF    3D,W
+0CDD:  BCF    03.5
+0CDE:  MOVWF  20
+0CDF:  RLF    20,F
+0CE0:  MOVLW  FC
+0CE1:  ANDWF  20,F
+0CE2:  MOVF   20,W
+0CE3:  BCF    0A.3
+0CE4:  CALL   07F
+0CE5:  BSF    0A.3
+0CE6:  MOVWF  21
+0CE7:  BSF    03.5
+0CE8:  MOVWF  43
+.................... 	num = RegInfo[reg].size; 
+0CE9:  RLF    3D,W
+0CEA:  BCF    03.5
+0CEB:  MOVWF  20
+0CEC:  RLF    20,F
+0CED:  MOVLW  FC
+0CEE:  ANDWF  20,F
+0CEF:  MOVF   20,W
+0CF0:  ADDLW  03
+0CF1:  BCF    0A.3
+0CF2:  CALL   07F
+0CF3:  BSF    0A.3
+0CF4:  MOVWF  21
+0CF5:  BSF    03.5
+0CF6:  MOVWF  47
+.................... 	done=0; 
+0CF7:  BCF    45.0
+.................... 	 
+.................... 	// Update EEPROM Ckecksum 
+.................... 	EECKSUM = read_eeprom(EEPROM_CKSUM); 
+0CF8:  MOVLW  FF
+0CF9:  BCF    03.5
+0CFA:  BSF    03.6
+0CFB:  MOVWF  0D
+0CFC:  BSF    03.5
+0CFD:  BCF    0C.7
+0CFE:  BSF    0C.0
+0CFF:  BCF    03.5
+0D00:  MOVF   0C,W
+0D01:  BSF    03.5
+0D02:  BCF    03.6
+0D03:  MOVWF  44
+.................... 	for(x=0;x<num;x++) { 
+0D04:  CLRF   42
+0D05:  MOVF   47,W
+0D06:  SUBWF  42,W
+0D07:  BTFSC  03.0
+0D08:  GOTO   553
+.................... 		if ( !done ) { 
+0D09:  BTFSC  45.0
+0D0A:  GOTO   551
+.................... 			restart_wdt(); 
+0D0B:  CLRWDT
+.................... 			//wreg = arg->Key; 
+.................... 			//wreg |= 0x10 && (arg->Strobe != 0); 
+.................... 			//wreg |= 0x20 && (arg->Last != 0); 
+.................... 			wreg = *arg; 
+0D0C:  MOVF   3F,W
+0D0D:  BCF    03.5
+0D0E:  MOVWF  23
+0D0F:  BSF    03.5
+0D10:  MOVF   3E,W
+0D11:  MOVWF  04
+0D12:  BCF    03.7
+0D13:  BCF    03.5
+0D14:  BTFSC  23.0
+0D15:  BSF    03.7
+0D16:  MOVF   00,W
+0D17:  BSF    03.5
+0D18:  MOVWF  46
+.................... 			wreg.Strobe = 0; // Don't keep strobe bit 
+0D19:  BCF    46.4
+.................... 			done = arg->Last; 
+0D1A:  BCF    45.0
+0D1B:  MOVF   3E,W
+0D1C:  MOVWF  04
+0D1D:  BCF    03.7
+0D1E:  BTFSC  3F.0
+0D1F:  BSF    03.7
+0D20:  BTFSC  00.5
+0D21:  BSF    45.0
+.................... 			*w = wreg; 
+0D22:  MOVF   41,W
+0D23:  BCF    03.5
+0D24:  MOVWF  23
+0D25:  BSF    03.5
+0D26:  MOVF   40,W
+0D27:  MOVWF  04
+0D28:  BCF    03.7
+0D29:  BCF    03.5
+0D2A:  BTFSC  23.0
+0D2B:  BSF    03.7
+0D2C:  BSF    03.5
+0D2D:  MOVF   46,W
+0D2E:  MOVWF  00
+.................... 			EECKSUM ^= read_eeprom(eePtr+x); 
+0D2F:  MOVF   42,W
+0D30:  ADDWF  43,W
+0D31:  MOVWF  48
+0D32:  MOVF   48,W
+0D33:  BCF    03.5
+0D34:  BSF    03.6
+0D35:  MOVWF  0D
+0D36:  BSF    03.5
+0D37:  BCF    0C.7
+0D38:  BSF    0C.0
+0D39:  BCF    03.5
+0D3A:  MOVF   0C,W
+0D3B:  BSF    03.5
+0D3C:  BCF    03.6
+0D3D:  XORWF  44,F
+.................... 			write_ee(eePtr+x,(int)wreg); 
+0D3E:  MOVF   42,W
+0D3F:  ADDWF  43,W
+0D40:  MOVWF  48
+0D41:  MOVWF  49
+0D42:  MOVF   46,W
+0D43:  MOVWF  4A
+0D44:  BCF    0A.3
+0D45:  BCF    03.5
+0D46:  CALL   2FC
+0D47:  BSF    0A.3
+.................... 			EECKSUM ^= (int)wreg; 
+0D48:  BSF    03.5
+0D49:  MOVF   46,W
+0D4A:  XORWF  44,F
+.................... 			w++; 
+0D4B:  INCF   40,F
+0D4C:  BTFSC  03.2
+0D4D:  INCF   41,F
+.................... 			arg++; 
+0D4E:  INCF   3E,F
+0D4F:  BTFSC  03.2
+0D50:  INCF   3F,F
+.................... 		} 
+.................... 	}  
+0D51:  INCF   42,F
+0D52:  GOTO   505
+.................... 	write_ee(EEPROM_CKSUM,EECKSUM); 
+0D53:  MOVLW  FF
+0D54:  MOVWF  49
+0D55:  MOVF   44,W
+0D56:  MOVWF  4A
+0D57:  BCF    0A.3
+0D58:  BCF    03.5
+0D59:  CALL   2FC
+0D5A:  BSF    0A.3
+.................... }// }}} 
+.................... void SetBits(int reg,sDTMF sbit ) { // {{{ 
+.................... 	int8 * w; 
+.................... 	int wreg,eePtr,EECKSUM; 
+.................... 	w = RegInfo[reg].ramPtr; 
+.................... 	eePtr = RegInfo[reg].ptr; 
+.................... 	wreg = *w | sbit.Key; 
+.................... 	*w = wreg; 
+.................... 	// Update EEPROM Ckecksum 
+.................... 	EECKSUM = read_eeprom(EEPROM_CKSUM); 
+.................... 	EECKSUM ^= read_eeprom(eePtr) ^ wreg; 
+.................... 	write_ee(EEPROM_CKSUM,EECKSUM); 
+....................  
+.................... 	write_ee(eePtr,wreg); 
+.................... } // }}} 
+.................... void ClearBits(int reg,sDTMF sbit ) { // {{{ 
+.................... 	int8 * w; 
+.................... 	int wreg,eePtr,EECKSUM; 
+.................... 	w = RegInfo[reg].ramPtr; 
+.................... 	eePtr = RegInfo[reg].ptr; 
+.................... 	wreg = *w & (~ sbit.Key); 
+.................... 	*w = wreg; 
+.................... 	// Update EEPROM Ckecksum 
+.................... 	EECKSUM = read_eeprom(EEPROM_CKSUM); 
+.................... 	EECKSUM ^= read_eeprom(eePtr) ^ wreg; 
+.................... 	write_ee(EEPROM_CKSUM,EECKSUM); 
+....................  
+.................... 	write_ee(eePtr,wreg); 
+.................... } // }}} 
+....................  
+.................... int dec2hex(int c1, int c2) { // {{{ 
+.................... 	int r; 
+.................... 	//r = mul10[c1] + c2; 
+.................... 	r = (c1 * 10) + c2; 
+*
+053A:  BSF    03.5
+053B:  MOVF   3F,W
+053C:  MOVWF  48
+053D:  MOVLW  0A
+053E:  MOVWF  49
+053F:  BCF    03.5
+0540:  CALL   4ED
+0541:  BSF    03.5
+0542:  MOVF   40,W
+0543:  BCF    03.5
+0544:  ADDWF  21,W
+0545:  BSF    03.5
+0546:  MOVWF  41
+.................... 	return (r); 
+0547:  MOVF   41,W
+0548:  BCF    03.5
+0549:  MOVWF  21
+.................... }	// }}} 
+054A:  RETLW  00
+....................  
+.................... void ProcessDTMF (int Key) { // {{{ 
+....................     if((DTMFPtr <= &DTMFSeq[DTMFSeqSize-1]) && (DTMFPtr >= &DTMFSeq[0])) { 
+*
+071A:  MOVF   7C,F
+071B:  BTFSS  03.2
+071C:  GOTO   7BC
+071D:  MOVF   7B,W
+071E:  SUBLW  7A
+071F:  BTFSS  03.0
+0720:  GOTO   7BC
+0721:  MOVF   7C,F
+0722:  BTFSS  03.2
+0723:  GOTO   728
+0724:  MOVF   7B,W
+0725:  SUBLW  6C
+0726:  BTFSC  03.0
+0727:  GOTO   7BC
+.................... 	switch(Key) { 
+0728:  BSF    03.5
+0729:  MOVF   32,W
+072A:  XORLW  0A
+072B:  BCF    03.5
+072C:  BTFSC  03.2
+072D:  GOTO   741
+072E:  XORLW  07
+072F:  BTFSC  03.2
+0730:  GOTO   74A
+0731:  XORLW  03
+0732:  BTFSC  03.2
+0733:  GOTO   754
+0734:  XORLW  01
+0735:  BTFSC  03.2
+0736:  GOTO   75E
+0737:  XORLW  0F
+0738:  BTFSC  03.2
+0739:  GOTO   768
+073A:  XORLW  0B
+073B:  BTFSC  03.2
+073C:  GOTO   772
+073D:  XORLW  07
+073E:  BTFSC  03.2
+073F:  GOTO   77C
+0740:  GOTO   786
+.................... 		case(d0): DTMFPtr->Key = 0x00; break; 
+0741:  MOVF   7B,W
+0742:  MOVWF  04
+0743:  BCF    03.7
+0744:  BTFSC  7C.0
+0745:  BSF    03.7
+0746:  MOVLW  F0
+0747:  ANDWF  00,W
+0748:  MOVWF  00
+0749:  GOTO   795
+.................... 		case(da): DTMFPtr->Key = 0x0a; break; 
+074A:  MOVF   7B,W
+074B:  MOVWF  04
+074C:  BCF    03.7
+074D:  BTFSC  7C.0
+074E:  BSF    03.7
+074F:  MOVLW  F0
+0750:  ANDWF  00,W
+0751:  IORLW  0A
+0752:  MOVWF  00
+0753:  GOTO   795
+.................... 		case(db): DTMFPtr->Key = 0x0b; break; 
+0754:  MOVF   7B,W
+0755:  MOVWF  04
+0756:  BCF    03.7
+0757:  BTFSC  7C.0
+0758:  BSF    03.7
+0759:  MOVLW  F0
+075A:  ANDWF  00,W
+075B:  IORLW  0B
+075C:  MOVWF  00
+075D:  GOTO   795
+.................... 		case(dc): DTMFPtr->Key = 0x0c; break; 
+075E:  MOVF   7B,W
+075F:  MOVWF  04
+0760:  BCF    03.7
+0761:  BTFSC  7C.0
+0762:  BSF    03.7
+0763:  MOVLW  F0
+0764:  ANDWF  00,W
+0765:  IORLW  0C
+0766:  MOVWF  00
+0767:  GOTO   795
+.................... 		case(dd): DTMFPtr->Key = 0x0d; break; 
+0768:  MOVF   7B,W
+0769:  MOVWF  04
+076A:  BCF    03.7
+076B:  BTFSC  7C.0
+076C:  BSF    03.7
+076D:  MOVLW  F0
+076E:  ANDWF  00,W
+076F:  IORLW  0D
+0770:  MOVWF  00
+0771:  GOTO   795
+.................... 		case(ds): DTMFPtr->Key = 0x0e; break; 
+0772:  MOVF   7B,W
+0773:  MOVWF  04
+0774:  BCF    03.7
+0775:  BTFSC  7C.0
+0776:  BSF    03.7
+0777:  MOVLW  F0
+0778:  ANDWF  00,W
+0779:  IORLW  0E
+077A:  MOVWF  00
+077B:  GOTO   795
+.................... 		case(dp): DTMFPtr->Key = 0x0f; break; 
+077C:  MOVF   7B,W
+077D:  MOVWF  04
+077E:  BCF    03.7
+077F:  BTFSC  7C.0
+0780:  BSF    03.7
+0781:  MOVLW  F0
+0782:  ANDWF  00,W
+0783:  IORLW  0F
+0784:  MOVWF  00
+0785:  GOTO   795
+.................... 		default : DTMFPtr->Key = Key ; break; 
+0786:  MOVF   7B,W
+0787:  MOVWF  04
+0788:  BCF    03.7
+0789:  BTFSC  7C.0
+078A:  BSF    03.7
+078B:  BSF    03.5
+078C:  MOVF   32,W
+078D:  ANDLW  0F
+078E:  BCF    03.5
+078F:  MOVWF  20
+0790:  MOVLW  F0
+0791:  ANDWF  00,W
+0792:  IORWF  20,W
+0793:  MOVWF  00
+0794:  GOTO   795
+.................... 	} 
+.................... 	if (Key == dp) { 
+0795:  BSF    03.5
+0796:  MOVF   32,W
+0797:  SUBLW  0C
+0798:  BTFSS  03.2
+0799:  GOTO   7A7
+.................... 		LastDTMF->Last = 1; 
+079A:  MOVF   7D,W
+079B:  MOVWF  04
+079C:  BCF    03.7
+079D:  BTFSC  7E.0
+079E:  BSF    03.7
+079F:  BSF    00.5
+.................... 		PoundChars = (PoundChars << 1) + 1; 
+07A0:  BCF    03.0
+07A1:  RLF    2B,W
+07A2:  BCF    03.5
+07A3:  ADDLW  01
+07A4:  BSF    03.5
+07A5:  MOVWF  2B
+.................... 	} 
+.................... 	else { 
+07A6:  GOTO   7AE
+.................... 		LastDTMF->Last = 0; 
+07A7:  MOVF   7D,W
+07A8:  MOVWF  04
+07A9:  BCF    03.7
+07AA:  BTFSC  7E.0
+07AB:  BSF    03.7
+07AC:  BCF    00.5
+.................... 		PoundChars = 0x00; 
+07AD:  CLRF   2B
+.................... 	} 
+.................... 	DTMFPtr->Strobe = 1; 
+07AE:  MOVF   7B,W
+07AF:  MOVWF  04
+07B0:  BCF    03.7
+07B1:  BTFSC  7C.0
+07B2:  BSF    03.7
+07B3:  BSF    00.4
+.................... 	LastDTMF = DTMFPtr; 
+07B4:  MOVF   7C,W
+07B5:  MOVWF  7E
+07B6:  MOVF   7B,W
+07B7:  MOVWF  7D
+.................... 	DTMFPtr++; 
+07B8:  INCF   7B,F
+07B9:  BTFSC  03.2
+07BA:  INCF   7C,F
+07BB:  BCF    03.5
+....................     } 
+.................... }	// }}} 
+07BC:  BSF    0A.3
+07BD:  GOTO   314 (RETURN)
+....................  
+.................... void DTMFStates ( void ) { // {{{ 
+.................... 	int ADDR; 
+.................... 	bit ADDR_VALID; 
+....................  
+.................... 	ADDR = dec2hex(DTMFSeq[0].Key , DTMFSeq[1].Key); 
+*
+0B1C:  MOVF   6D,W
+0B1D:  ANDLW  0F
+0B1E:  BSF    03.5
+0B1F:  MOVWF  33
+0B20:  BCF    03.5
+0B21:  MOVF   6E,W
+0B22:  ANDLW  0F
+0B23:  BSF    03.5
+0B24:  MOVWF  34
+0B25:  MOVF   33,W
+0B26:  MOVWF  3F
+0B27:  MOVF   34,W
+0B28:  MOVWF  40
+0B29:  BCF    0A.3
+0B2A:  BCF    03.5
+0B2B:  CALL   53A
+0B2C:  BSF    0A.3
+0B2D:  MOVF   21,W
+0B2E:  BSF    03.5
+0B2F:  MOVWF  31
+.................... 	ADDR_VALID = (ADDR == SiteID) || (ADDR == SiteGID) ; 
+0B30:  BCF    32.0
+0B31:  BCF    03.5
+0B32:  MOVF   45,W
+0B33:  BSF    03.5
+0B34:  SUBWF  31,W
+0B35:  BTFSC  03.2
+0B36:  GOTO   33A
+0B37:  MOVF   31,W
+0B38:  SUBLW  5A
+0B39:  BTFSC  03.2
+0B3A:  BSF    32.0
+....................  
+.................... 	switch(STATE) { 
+0B3B:  MOVF   20,W
+0B3C:  BCF    03.5
+0B3D:  BTFSC  03.2
+0B3E:  GOTO   343
+0B3F:  XORLW  01
+0B40:  BTFSC  03.2
+0B41:  GOTO   3F7
+0B42:  GOTO   734
+.................... 		case(IDLE): 
+.................... 			if ( ADDR_VALID && CheckPassword() ) { 
+0B43:  BSF    03.5
+0B44:  BTFSS  32.0
+0B45:  GOTO   3E6
+*
+0BC6:  MOVF   21,F
+0BC7:  BTFSS  03.2
+0BC8:  GOTO   3CB
+0BC9:  BSF    03.5
+0BCA:  GOTO   3E6
+.................... 				STATE = ADMIN; 
+0BCB:  MOVLW  01
+0BCC:  BSF    03.5
+0BCD:  MOVWF  20
+....................                     AdminPtt = (int8)COR; // Send DTMF on radio that does the admin stuff 
+0BCE:  MOVF   2C,W
+0BCF:  MOVWF  25
+.................... 		    morseStart(WAIT); 
+0BD0:  MOVLW  01
+0BD1:  MOVWF  3D
+0BD2:  BCF    03.5
+0BD3:  CALL   000
+.................... 				morse(0x0a); 
+0BD4:  MOVLW  0A
+0BD5:  BSF    03.5
+0BD6:  MOVWF  41
+0BD7:  BCF    0A.3
+0BD8:  BCF    03.5
+0BD9:  CALL   7BE
+0BDA:  BSF    0A.3
+.................... 				MORSE_WORD_DELAY; 
+0BDB:  BCF    0A.3
+0BDC:  CALL   7D2
+0BDD:  BSF    0A.3
+.................... 				morseStop(); 
+0BDE:  BCF    0A.3
+0BDF:  CALL   7E7
+0BE0:  BSF    0A.3
+.................... 				CommandModeTimeout = CMD_MODE_TIMEOUT; 
+0BE1:  MOVLW  0E
+0BE2:  MOVWF  6C
+0BE3:  MOVLW  4E
+0BE4:  MOVWF  6B
+0BE5:  BSF    03.5
+.................... 			} 
+.................... 			// 5 # consecutive characters resets the password 
+.................... 			if ( PoundChars == 0x1F ) { 
+0BE6:  MOVF   2B,W
+0BE7:  SUBLW  1F
+0BE8:  BTFSS  03.2
+0BE9:  GOTO   3F6
+.................... 				resetAdminPwd(); 
+.................... 			} 
+.................... 			break; 
+*
+0BF6:  GOTO   737
+.................... 		case(ADMIN): 
+.................... 			if ( CommandModeTimeout && ADDR_VALID ) { // Variable is active low 
+0BF7:  MOVF   6B,W
+0BF8:  IORWF  6C,W
+0BF9:  BTFSC  03.2
+0BFA:  GOTO   72E
+0BFB:  BSF    03.5
+0BFC:  BTFSC  32.0
+0BFD:  GOTO   400
+0BFE:  BCF    03.5
+0BFF:  GOTO   72E
+.................... 				AdminStates(); 
+.................... 				CommandModeTimeout = CMD_MODE_TIMEOUT; 
+*
+0F28:  MOVLW  0E
+0F29:  BCF    03.5
+0F2A:  MOVWF  6C
+0F2B:  MOVLW  4E
+0F2C:  MOVWF  6B
+.................... 			}  
+.................... 			else { 
+0F2D:  GOTO   731
+.................... 				STATE = IDLE; 
+0F2E:  BSF    03.5
+0F2F:  CLRF   20
+0F30:  BCF    03.5
+.................... 			} 			 
+.................... 			break; 
+0F31:  BSF    03.5
+0F32:  GOTO   737
+0F33:  BCF    03.5
+.................... 		default:  
+.................... 			STATE = IDLE; 
+0F34:  BSF    03.5
+0F35:  CLRF   20
+.................... 			break; 
+0F36:  GOTO   737
+.................... 	} 
+.................... 	ClearDTMFSeq(); 
+0F37:  BCF    0A.3
+0F38:  BCF    03.5
+0F39:  CALL   44F
+0F3A:  BSF    0A.3
+.................... 	return; 
+.................... } // }}} 
+....................  
+.................... void AdminStates(void) { // {{{ 
+.................... 	int REG; 
+.................... 	int OP; 
+.................... 	int rcnt; 
+.................... 	int Argument0; 
+.................... 	int Argument1; 
+.................... 	int *TargetRamReg; 
+.................... 	int *RamPtr; 
+.................... 	bit ExitCondition,ArgumentsPresent; 
+.................... 	bit RamRegisterAccess; 
+.................... 	static bit eepromReg; 
+*
+0ADE:  BSF    03.5
+0ADF:  BCF    2E.3
+.................... 	//struct {int eeprom * ptr, 
+.................... 	//	int size}  
+.................... 	// AuxOut address = 64 
+....................  
+.................... 	// 
+.................... 	// Input syntax: 
+.................... 	//  ADDR  0	        1	  2    3       4      5    6  
+.................... 	//  *    ADDR[1] ADDR[0] [OP] <REG[1] REG[0] <ARGx ARGy ...> > 
+.................... 	// 
+.................... 	REG  = dec2hex(DTMFSeq[3].Key , DTMFSeq[4].Key); 
+*
+0C00:  MOVF   70,W
+0C01:  ANDLW  0F
+0C02:  MOVWF  3D
+0C03:  MOVF   71,W
+0C04:  ANDLW  0F
+0C05:  MOVWF  3E
+0C06:  MOVF   3D,W
+0C07:  MOVWF  3F
+0C08:  MOVF   3E,W
+0C09:  MOVWF  40
+0C0A:  BCF    0A.3
+0C0B:  BCF    03.5
+0C0C:  CALL   53A
+0C0D:  BSF    0A.3
+0C0E:  MOVF   21,W
+0C0F:  BSF    03.5
+0C10:  MOVWF  33
+.................... 	OP   = DTMFSeq[2].Key; 
+0C11:  BCF    03.5
+0C12:  MOVF   6F,W
+0C13:  ANDLW  0F
+0C14:  BSF    03.5
+0C15:  MOVWF  34
+.................... 	ArgumentsPresent = (LastDTMF > &DTMFSeq[4]); 
+0C16:  BCF    3C.1
+0C17:  MOVF   7E,F
+0C18:  BTFSS  03.2
+0C19:  GOTO   41D
+0C1A:  MOVF   7D,W
+0C1B:  SUBLW  71
+0C1C:  BTFSS  03.0
+0C1D:  BSF    3C.1
+.................... 	ExitCondition = (LastDTMF == &DTMFSeq[3]); 
+0C1E:  BCF    3C.0
+0C1F:  MOVF   7D,W
+0C20:  SUBLW  70
+0C21:  BTFSS  03.2
+0C22:  GOTO   426
+0C23:  MOVF   7E,F
+0C24:  BTFSC  03.2
+0C25:  BSF    3C.0
+.................... 	eepromReg = (REG < RegInfoSize) || OP==0x00; 
+0C26:  BCF    2E.3
+0C27:  MOVF   33,W
+0C28:  SUBLW  26
+0C29:  BTFSC  03.0
+0C2A:  GOTO   42D
+0C2B:  MOVF   34,F
+0C2C:  BTFSC  03.2
+0C2D:  BSF    2E.3
+.................... 	restart_wdt(); 
+0C2E:  CLRWDT
+.................... 	if ( ArgumentsPresent ) { 
+0C2F:  BTFSS  3C.1
+0C30:  GOTO   438
+.................... 		Argument0 = DTMFSeq[5].Key; 
+0C31:  MOVF   72,W
+0C32:  ANDLW  0F
+0C33:  MOVWF  36
+.................... 		Argument1 = DTMFSeq[6].Key; 
+0C34:  MOVF   73,W
+0C35:  ANDLW  0F
+0C36:  MOVWF  37
+.................... 	} 
+.................... 	else { 
+0C37:  GOTO   43A
+.................... 		Argument0 = 0x00; 
+0C38:  CLRF   36
+.................... 		Argument1 = 0x00; 
+0C39:  CLRF   37
+.................... 	} 
+....................   if ( OP == 0x01 && ExitCondition) { 
+0C3A:  DECFSZ 34,W
+0C3B:  GOTO   460
+0C3C:  BTFSS  3C.0
+0C3D:  GOTO   460
+.................... 		morseStart(WAIT); 
+0C3E:  MOVLW  01
+0C3F:  MOVWF  3D
+0C40:  BCF    03.5
+0C41:  CALL   000
+.................... 		morse(MCHAR('r')); 
+0C42:  MOVLW  1B
+0C43:  BSF    03.5
+0C44:  MOVWF  41
+0C45:  BCF    0A.3
+0C46:  BCF    03.5
+0C47:  CALL   7BE
+0C48:  BSF    0A.3
+.................... 		morse(MCHAR('b')); 
+0C49:  MOVLW  0B
+0C4A:  BSF    03.5
+0C4B:  MOVWF  41
+0C4C:  BCF    0A.3
+0C4D:  BCF    03.5
+0C4E:  CALL   7BE
+0C4F:  BSF    0A.3
+.................... 		morse(MCHAR('t')); 
+0C50:  MOVLW  1D
+0C51:  BSF    03.5
+0C52:  MOVWF  41
+0C53:  BCF    0A.3
+0C54:  BCF    03.5
+0C55:  CALL   7BE
+0C56:  BSF    0A.3
+....................     MORSE_WORD_DELAY; 
+0C57:  BCF    0A.3
+0C58:  CALL   7D2
+0C59:  BSF    0A.3
+....................     morseStop(); 
+0C5A:  BCF    0A.3
+0C5B:  CALL   7E7
+0C5C:  BSF    0A.3
+....................   	reset_cpu(); 
+0C5D:  CLRF   0A
+0C5E:  GOTO   000
+0C5F:  BSF    03.5
+....................   } 
+.................... 	// Matching SiteID or GroupID {{{ 
+.................... 	if ( eepromReg ) { 
+0C60:  BTFSS  2E.3
+0C61:  GOTO   606
+.................... 		// EEPROM registers {{{ 
+.................... 		switch(OP) { 
+0C62:  MOVF   34,W
+0C63:  BCF    03.5
+0C64:  BTFSC  03.2
+0C65:  GOTO   476
+0C66:  XORLW  02
+0C67:  BTFSC  03.2
+0C68:  GOTO   496
+0C69:  XORLW  07
+0C6A:  BTFSC  03.2
+0C6B:  GOTO   4A1
+0C6C:  XORLW  03
+0C6D:  BTFSC  03.2
+0C6E:  GOTO   4BA
+0C6F:  XORLW  01
+0C70:  BTFSC  03.2
+0C71:  GOTO   55C
+0C72:  XORLW  0F
+0C73:  BTFSC  03.2
+0C74:  GOTO   5DE
+0C75:  GOTO   5EA
+.................... 			case(0x00): // Enter & Exit admin mode 
+.................... 				morseStart(WAIT); 
+0C76:  MOVLW  01
+0C77:  BSF    03.5
+0C78:  MOVWF  3D
+0C79:  BCF    03.5
+0C7A:  CALL   000
+.................... 				if ( ExitCondition ) { 
+0C7B:  BSF    03.5
+0C7C:  BTFSS  3C.0
+0C7D:  GOTO   487
+.................... 					// Exit admin state on *010# 
+.................... 					morse(0x0e); 
+0C7E:  MOVLW  0E
+0C7F:  MOVWF  41
+0C80:  BCF    0A.3
+0C81:  BCF    03.5
+0C82:  CALL   7BE
+0C83:  BSF    0A.3
+.................... 					STATE = IDLE; 
+0C84:  BSF    03.5
+0C85:  CLRF   20
+.................... 				} else { 
+0C86:  GOTO   48E
+.................... 					// Stay in ADMIN state and confirm it with "A" 
+.................... 					morse(0x0a); 
+0C87:  MOVLW  0A
+0C88:  MOVWF  41
+0C89:  BCF    0A.3
+0C8A:  BCF    03.5
+0C8B:  CALL   7BE
+0C8C:  BSF    0A.3
+0C8D:  BSF    03.5
+.................... 				} 
+.................... 				MORSE_WORD_DELAY; 
+0C8E:  BCF    0A.3
+0C8F:  BCF    03.5
+0C90:  CALL   7D2
+0C91:  BSF    0A.3
+.................... 				morseStop(); 
+0C92:  BCF    0A.3
+0C93:  CALL   7E7
+0C94:  BSF    0A.3
+.................... 				break; 
+0C95:  GOTO   604
+.................... 			case(0x02): // Set Nibble 
+.................... 				SetWord(REG,DTMFSeq[DTMFArgPtr].Key); 
+0C96:  MOVF   72,W
+0C97:  ANDLW  0F
+0C98:  BSF    03.5
+0C99:  MOVWF  3D
+0C9A:  MOVF   33,W
+0C9B:  MOVWF  3F
+0C9C:  MOVF   3D,W
+0C9D:  MOVWF  40
+0C9E:  BCF    03.5
+0C9F:  CALL   13B
+.................... 				break; 
+0CA0:  GOTO   604
+.................... 			case(0x05): // Set Word using 2 decimal value (00,01,02, etc... up to 99) 
+.................... 				SetWord(REG,dec2hex(DTMFSeq[DTMFArgPtr].Key,DTMFSeq[DTMFArgPtr+1].Key)); 
+0CA1:  MOVF   72,W
+0CA2:  ANDLW  0F
+0CA3:  BSF    03.5
+0CA4:  MOVWF  3D
+0CA5:  MOVF   73,W
+0CA6:  ANDLW  0F
+0CA7:  MOVWF  3E
+0CA8:  MOVF   3D,W
+0CA9:  MOVWF  3F
+0CAA:  MOVF   3E,W
+0CAB:  MOVWF  40
+0CAC:  BCF    0A.3
+0CAD:  BCF    03.5
+0CAE:  CALL   53A
+0CAF:  BSF    0A.3
+0CB0:  MOVF   21,W
+0CB1:  BSF    03.5
+0CB2:  MOVWF  3E
+0CB3:  MOVF   33,W
+0CB4:  MOVWF  3F
+0CB5:  MOVF   3E,W
+0CB6:  MOVWF  40
+0CB7:  BCF    03.5
+0CB8:  CALL   13B
+.................... 				break; 
+0CB9:  GOTO   604
+.................... 			case(0x06): // Set array of nibbles 
+.................... 				SetArray(REG,&DTMFSeq[DTMFArgPtr]); 
+0CBA:  BSF    03.5
+0CBB:  MOVF   33,W
+0CBC:  MOVWF  3D
+0CBD:  CLRF   3F
+0CBE:  MOVLW  72
+0CBF:  MOVWF  3E
+.................... 				break; 
+*
+0D5B:  GOTO   604
+.................... 			case(0x07): 
+.................... 				morseStart(WAIT); 
+0D5C:  MOVLW  01
+0D5D:  BSF    03.5
+0D5E:  MOVWF  3D
+0D5F:  BCF    03.5
+0D60:  CALL   000
+.................... 				if ( REG == 0x00 ) { 
+0D61:  BSF    03.5
+0D62:  MOVF   33,F
+0D63:  BTFSS  03.2
+0D64:  GOTO   577
+.................... 					morse(0x0E); // ERROR! Don't echo AdminPwd 
+0D65:  MOVLW  0E
+0D66:  MOVWF  41
+0D67:  BCF    0A.3
+0D68:  BCF    03.5
+0D69:  CALL   7BE
+0D6A:  BSF    0A.3
+....................           morse(0x03); // ERROR! Don't echo AdminPwd 
+0D6B:  MOVLW  03
+0D6C:  BSF    03.5
+0D6D:  MOVWF  41
+0D6E:  BCF    0A.3
+0D6F:  BCF    03.5
+0D70:  CALL   7BE
+0D71:  BSF    0A.3
+....................           MORSE_WORD_DELAY; 
+0D72:  BCF    0A.3
+0D73:  CALL   7D2
+0D74:  BSF    0A.3
+.................... 				} 
+.................... 				else { 
+0D75:  GOTO   5DA
+0D76:  BSF    03.5
+....................           RamPtr = RegInfo[REG].ramPtr; 
+0D77:  RLF    33,W
+0D78:  BCF    03.5
+0D79:  MOVWF  20
+0D7A:  RLF    20,F
+0D7B:  MOVLW  FC
+0D7C:  ANDWF  20,F
+0D7D:  MOVF   20,W
+0D7E:  ADDLW  01
+0D7F:  BSF    03.5
+0D80:  MOVWF  3E
+0D81:  INCF   3E,W
+0D82:  BCF    0A.3
+0D83:  BCF    03.5
+0D84:  CALL   07F
+0D85:  BSF    0A.3
+0D86:  MOVWF  23
+0D87:  BSF    03.5
+0D88:  MOVF   3E,W
+0D89:  BCF    0A.3
+0D8A:  BCF    03.5
+0D8B:  CALL   07F
+0D8C:  BSF    0A.3
+0D8D:  BSF    03.5
+0D8E:  MOVWF  3A
+0D8F:  BCF    03.5
+0D90:  MOVF   23,W
+0D91:  BSF    03.5
+0D92:  MOVWF  3B
+.................... 					for(rcnt=0;rcnt< RegInfo[REG].size;rcnt++) { 
+0D93:  CLRF   35
+0D94:  RLF    33,W
+0D95:  BCF    03.5
+0D96:  MOVWF  20
+0D97:  RLF    20,F
+0D98:  MOVLW  FC
+0D99:  ANDWF  20,F
+0D9A:  MOVF   20,W
+0D9B:  ADDLW  03
+0D9C:  BCF    0A.3
+0D9D:  CALL   07F
+0D9E:  BSF    0A.3
+0D9F:  MOVWF  21
+0DA0:  BSF    03.5
+0DA1:  SUBWF  35,W
+0DA2:  BTFSC  03.0
+0DA3:  GOTO   5D6
+.................... 						if ( REG >= 17 && REG <= 22 ) { 
+0DA4:  MOVF   33,W
+0DA5:  SUBLW  10
+0DA6:  BTFSC  03.0
+0DA7:  GOTO   5C0
+0DA8:  MOVF   33,W
+0DA9:  SUBLW  16
+0DAA:  BTFSS  03.0
+0DAB:  GOTO   5C0
+.................... 		          morse(*RamPtr); 
+0DAC:  MOVF   3B,W
+0DAD:  BCF    03.5
+0DAE:  MOVWF  23
+0DAF:  BSF    03.5
+0DB0:  MOVF   3A,W
+0DB1:  MOVWF  04
+0DB2:  BCF    03.7
+0DB3:  BCF    03.5
+0DB4:  BTFSC  23.0
+0DB5:  BSF    03.7
+0DB6:  MOVF   00,W
+0DB7:  BSF    03.5
+0DB8:  MOVWF  3D
+0DB9:  MOVWF  41
+0DBA:  BCF    0A.3
+0DBB:  BCF    03.5
+0DBC:  CALL   7BE
+0DBD:  BSF    0A.3
+.................... 						}  
+.................... 						else { 
+0DBE:  GOTO   5D0
+0DBF:  BSF    03.5
+.................... 							TransmitDigit((signed int)*RamPtr); 
+0DC0:  MOVF   3B,W
+0DC1:  BCF    03.5
+0DC2:  MOVWF  23
+0DC3:  BSF    03.5
+0DC4:  MOVF   3A,W
+0DC5:  MOVWF  04
+0DC6:  BCF    03.7
+0DC7:  BCF    03.5
+0DC8:  BTFSC  23.0
+0DC9:  BSF    03.7
+0DCA:  MOVF   00,W
+0DCB:  BSF    03.5
+0DCC:  MOVWF  3D
+0DCD:  MOVWF  3E
+0DCE:  BCF    03.5
+0DCF:  CALL   19D
+.................... 						} 
+....................             RamPtr++; 
+0DD0:  BSF    03.5
+0DD1:  INCF   3A,F
+0DD2:  BTFSC  03.2
+0DD3:  INCF   3B,F
+.................... 					} 
+0DD4:  INCF   35,F
+0DD5:  GOTO   594
+....................           MORSE_WORD_DELAY; 
+0DD6:  BCF    0A.3
+0DD7:  BCF    03.5
+0DD8:  CALL   7D2
+0DD9:  BSF    0A.3
+.................... 				} 
+.................... 				morseStop(); 
+0DDA:  BCF    0A.3
+0DDB:  CALL   7E7
+0DDC:  BSF    0A.3
+.................... 				break; 
+0DDD:  GOTO   604
+.................... 			case(0x08): 
+.................... 				MasterHWReset(); 
+.................... 				break; 
+*
+0DE9:  GOTO   604
+.................... 			default: 
+.................... 				morseStart(WAIT); 
+0DEA:  MOVLW  01
+0DEB:  BSF    03.5
+0DEC:  MOVWF  3D
+0DED:  BCF    03.5
+0DEE:  CALL   000
+.................... 				morse(0x0e); // Error 
+0DEF:  MOVLW  0E
+0DF0:  BSF    03.5
+0DF1:  MOVWF  41
+0DF2:  BCF    0A.3
+0DF3:  BCF    03.5
+0DF4:  CALL   7BE
+0DF5:  BSF    0A.3
+.................... 				morse(0x01); 
+0DF6:  MOVLW  01
+0DF7:  BSF    03.5
+0DF8:  MOVWF  41
+0DF9:  BCF    0A.3
+0DFA:  BCF    03.5
+0DFB:  CALL   7BE
+0DFC:  BSF    0A.3
+.................... 	      MORSE_WORD_DELAY; 
+0DFD:  BCF    0A.3
+0DFE:  CALL   7D2
+0DFF:  BSF    0A.3
+.................... 				morseStop(); 
+0E00:  BCF    0A.3
+0E01:  CALL   7E7
+0E02:  BSF    0A.3
+.................... 				break; 
+0E03:  GOTO   604
+.................... 		} 
+.................... 				// }}} 
+.................... 	} 
+.................... 	else { // RAM registers 
+0E04:  GOTO   6FF
+0E05:  BSF    03.5
+.................... 		// RAM registers {{{ 
+.................... 		switch(REG) { 
+0E06:  MOVF   33,W
+0E07:  XORLW  40
+0E08:  BCF    03.5
+0E09:  BTFSC  03.2
+0E0A:  GOTO   612
+0E0B:  XORLW  02
+0E0C:  BTFSC  03.2
+0E0D:  GOTO   618
+0E0E:  XORLW  04
+0E0F:  BTFSC  03.2
+0E10:  GOTO   61E
+0E11:  GOTO   625
+.................... 			case(AUX_OUT_REG): 
+.................... 					TargetRamReg = &AuxOut; 
+0E12:  BSF    03.5
+0E13:  CLRF   39
+0E14:  MOVLW  A4
+0E15:  MOVWF  38
+.................... 					RamRegisterAccess = 1; 
+0E16:  BSF    3C.2
+.................... 					break; 
+0E17:  GOTO   62A
+.................... 			case(COR_PER_SEC_REG): 
+.................... 					TargetRamReg = &COR_Per_Minute; 
+0E18:  BSF    03.5
+0E19:  CLRF   39
+0E1A:  MOVLW  A8
+0E1B:  MOVWF  38
+.................... 					RamRegisterAccess = 1; 
+0E1C:  BSF    3C.2
+.................... 					break; 
+0E1D:  GOTO   62A
+.................... 			case(TX_MORSE_ID_FLAG): // emulate 1/2 delay 
+.................... 					STATE = IDLE; 
+0E1E:  BSF    03.5
+0E1F:  CLRF   20
+.................... 					TXMorseID = 1; 
+0E20:  BCF    03.5
+0E21:  BSF    6A.1
+.................... 					break;					 
+0E22:  BSF    03.5
+0E23:  GOTO   62A
+0E24:  BCF    03.5
+.................... 			default: 
+.................... 					TargetRamReg = NULL; 
+0E25:  BSF    03.5
+0E26:  CLRF   39
+0E27:  CLRF   38
+.................... 					RamRegisterAccess = 0; 
+0E28:  BCF    3C.2
+.................... 					break; 
+0E29:  GOTO   62A
+.................... 		} 
+.................... 		if ( RamRegisterAccess ) { // Auxiliary register --> Set to 64 
+0E2A:  BTFSS  3C.2
+0E2B:  GOTO   6B4
+.................... 			switch(OP) { 
+0E2C:  MOVF   34,W
+0E2D:  XORLW  01
+0E2E:  BCF    03.5
+0E2F:  BTFSC  03.2
+0E30:  GOTO   63E
+0E31:  XORLW  03
+0E32:  BTFSC  03.2
+0E33:  GOTO   64B
+0E34:  XORLW  01
+0E35:  BTFSC  03.2
+0E36:  GOTO   65A
+0E37:  XORLW  07
+0E38:  BTFSC  03.2
+0E39:  GOTO   66A
+0E3A:  XORLW  03
+0E3B:  BTFSC  03.2
+0E3C:  GOTO   67B
+0E3D:  GOTO   698
+.................... 				case(0x01): 
+.................... 					*TargetRamReg = 0x00; 
+0E3E:  BSF    03.5
+0E3F:  MOVF   39,W
+0E40:  BCF    03.5
+0E41:  MOVWF  23
+0E42:  BSF    03.5
+0E43:  MOVF   38,W
+0E44:  MOVWF  04
+0E45:  BCF    03.7
+0E46:  BCF    03.5
+0E47:  BTFSC  23.0
+0E48:  BSF    03.7
+0E49:  CLRF   00
+.................... 					break; 
+0E4A:  GOTO   6B2
+.................... 				case(0x02):  
+.................... 					*TargetRamReg = DTMFSeq[DTMFArgPtr].Key; 
+0E4B:  BSF    03.5
+0E4C:  MOVF   39,W
+0E4D:  BCF    03.5
+0E4E:  MOVWF  23
+0E4F:  BSF    03.5
+0E50:  MOVF   38,W
+0E51:  MOVWF  04
+0E52:  BCF    03.7
+0E53:  BCF    03.5
+0E54:  BTFSC  23.0
+0E55:  BSF    03.7
+0E56:  MOVF   72,W
+0E57:  ANDLW  0F
+0E58:  MOVWF  00
+.................... 					break; 
+0E59:  GOTO   6B2
+.................... 				case(0x03): 
+.................... 					*TargetRamReg |= DTMFSeq[DTMFArgPtr].Key; 
+0E5A:  BSF    03.5
+0E5B:  MOVF   39,W
+0E5C:  BCF    03.5
+0E5D:  MOVWF  23
+0E5E:  BSF    03.5
+0E5F:  MOVF   38,W
+0E60:  MOVWF  04
+0E61:  BCF    03.7
+0E62:  BCF    03.5
+0E63:  BTFSC  23.0
+0E64:  BSF    03.7
+0E65:  MOVF   72,W
+0E66:  ANDLW  0F
+0E67:  IORWF  00,W
+0E68:  MOVWF  00
+.................... 					break; 
+0E69:  GOTO   6B2
+.................... 				case(0x04): 
+.................... 					*TargetRamReg &= ~DTMFSeq[DTMFArgPtr].Key; 
+0E6A:  BSF    03.5
+0E6B:  MOVF   39,W
+0E6C:  BCF    03.5
+0E6D:  MOVWF  23
+0E6E:  BSF    03.5
+0E6F:  MOVF   38,W
+0E70:  MOVWF  04
+0E71:  BCF    03.7
+0E72:  BCF    03.5
+0E73:  BTFSC  23.0
+0E74:  BSF    03.7
+0E75:  MOVF   72,W
+0E76:  ANDLW  0F
+0E77:  XORLW  FF
+0E78:  ANDWF  00,W
+0E79:  MOVWF  00
+.................... 					break; 
+0E7A:  GOTO   6B2
+.................... 				case(0x07): 
+.................... 					morseStart(WAIT); 
+0E7B:  MOVLW  01
+0E7C:  BSF    03.5
+0E7D:  MOVWF  3D
+0E7E:  BCF    03.5
+0E7F:  CALL   000
+.................... 					TransmitDigit((signed int)*TargetRamReg); 
+0E80:  BSF    03.5
+0E81:  MOVF   39,W
+0E82:  BCF    03.5
+0E83:  MOVWF  23
+0E84:  BSF    03.5
+0E85:  MOVF   38,W
+0E86:  MOVWF  04
+0E87:  BCF    03.7
+0E88:  BCF    03.5
+0E89:  BTFSC  23.0
+0E8A:  BSF    03.7
+0E8B:  MOVF   00,W
+0E8C:  BSF    03.5
+0E8D:  MOVWF  3D
+0E8E:  MOVWF  3E
+0E8F:  BCF    03.5
+0E90:  CALL   19D
+.................... 					MORSE_WORD_DELAY; 
+0E91:  BCF    0A.3
+0E92:  CALL   7D2
+0E93:  BSF    0A.3
+.................... 					morseStop(); 
+0E94:  BCF    0A.3
+0E95:  CALL   7E7
+0E96:  BSF    0A.3
+.................... 					break; 
+0E97:  GOTO   6B2
+.................... 				default: 
+.................... 					morseStart(WAIT); 
+0E98:  MOVLW  01
+0E99:  BSF    03.5
+0E9A:  MOVWF  3D
+0E9B:  BCF    03.5
+0E9C:  CALL   000
+.................... 					morse(0x0e); // Error 
+0E9D:  MOVLW  0E
+0E9E:  BSF    03.5
+0E9F:  MOVWF  41
+0EA0:  BCF    0A.3
+0EA1:  BCF    03.5
+0EA2:  CALL   7BE
+0EA3:  BSF    0A.3
+.................... 					morse(0x01); 
+0EA4:  MOVLW  01
+0EA5:  BSF    03.5
+0EA6:  MOVWF  41
+0EA7:  BCF    0A.3
+0EA8:  BCF    03.5
+0EA9:  CALL   7BE
+0EAA:  BSF    0A.3
+.................... 					MORSE_WORD_DELAY; 
+0EAB:  BCF    0A.3
+0EAC:  CALL   7D2
+0EAD:  BSF    0A.3
+.................... 					morseStop(); 
+0EAE:  BCF    0A.3
+0EAF:  CALL   7E7
+0EB0:  BSF    0A.3
+.................... 				    break; 
+0EB1:  GOTO   6B2
+.................... 			} 
+.................... 		} 
+.................... 		else if ( REG == TEMP_REG ) { 
+0EB2:  GOTO   6FF
+0EB3:  BSF    03.5
+0EB4:  MOVF   33,W
+0EB5:  SUBLW  41
+0EB6:  BTFSS  03.2
+0EB7:  GOTO   6E7
+.................... 			if ( OP == 0x07 ) { 
+0EB8:  MOVF   34,W
+0EB9:  SUBLW  07
+0EBA:  BTFSS  03.2
+0EBB:  GOTO   6CD
+.................... 				morseStart(WAIT); 
+0EBC:  MOVLW  01
+0EBD:  MOVWF  3D
+0EBE:  BCF    03.5
+0EBF:  CALL   000
+.................... 				TransmitDigit(TempC); 
+0EC0:  BSF    03.5
+0EC1:  MOVF   2D,W
+0EC2:  MOVWF  3E
+0EC3:  BCF    03.5
+0EC4:  CALL   19D
+.................... 				MORSE_WORD_DELAY; 
+0EC5:  BCF    0A.3
+0EC6:  CALL   7D2
+0EC7:  BSF    0A.3
+.................... 				morseStop(); 
+0EC8:  BCF    0A.3
+0EC9:  CALL   7E7
+0ECA:  BSF    0A.3
+.................... 			} else { 
+0ECB:  GOTO   6E5
+0ECC:  BSF    03.5
+.................... 				morseStart(WAIT); 
+0ECD:  MOVLW  01
+0ECE:  MOVWF  3D
+0ECF:  BCF    03.5
+0ED0:  CALL   000
+.................... 				morse(0x0e); // Error 
+0ED1:  MOVLW  0E
+0ED2:  BSF    03.5
+0ED3:  MOVWF  41
+0ED4:  BCF    0A.3
+0ED5:  BCF    03.5
+0ED6:  CALL   7BE
+0ED7:  BSF    0A.3
+.................... 				morse(0x01); 
+0ED8:  MOVLW  01
+0ED9:  BSF    03.5
+0EDA:  MOVWF  41
+0EDB:  BCF    0A.3
+0EDC:  BCF    03.5
+0EDD:  CALL   7BE
+0EDE:  BSF    0A.3
+.................... 				MORSE_WORD_DELAY; 
+0EDF:  BCF    0A.3
+0EE0:  CALL   7D2
+0EE1:  BSF    0A.3
+.................... 				morseStop(); 
+0EE2:  BCF    0A.3
+0EE3:  CALL   7E7
+0EE4:  BSF    0A.3
+.................... 			} 
+.................... 		} 
+.................... 		else { 
+0EE5:  GOTO   6FF
+0EE6:  BSF    03.5
+.................... 			morseStart(WAIT); 
+0EE7:  MOVLW  01
+0EE8:  MOVWF  3D
+0EE9:  BCF    03.5
+0EEA:  CALL   000
+.................... 			morse(0x0e); // Error 
+0EEB:  MOVLW  0E
+0EEC:  BSF    03.5
+0EED:  MOVWF  41
+0EEE:  BCF    0A.3
+0EEF:  BCF    03.5
+0EF0:  CALL   7BE
+0EF1:  BSF    0A.3
+.................... 			morse(0x02); 
+0EF2:  MOVLW  02
+0EF3:  BSF    03.5
+0EF4:  MOVWF  41
+0EF5:  BCF    0A.3
+0EF6:  BCF    03.5
+0EF7:  CALL   7BE
+0EF8:  BSF    0A.3
+.................... 			MORSE_WORD_DELAY; 
+0EF9:  BCF    0A.3
+0EFA:  CALL   7D2
+0EFB:  BSF    0A.3
+.................... 			morseStop(); 
+0EFC:  BCF    0A.3
+0EFD:  CALL   7E7
+0EFE:  BSF    0A.3
+.................... 		} 
+.................... 		// }}} 
+.................... 	} 
+.................... 	if ( OP == 0x02 || OP == 0x05 ) { 
+0EFF:  BSF    03.5
+0F00:  MOVF   34,W
+0F01:  SUBLW  02
+0F02:  BTFSC  03.2
+0F03:  GOTO   708
+0F04:  MOVF   34,W
+0F05:  SUBLW  05
+0F06:  BTFSS  03.2
+0F07:  GOTO   727
+.................... 			morseStart(WAIT); 
+0F08:  MOVLW  01
+0F09:  MOVWF  3D
+0F0A:  BCF    03.5
+0F0B:  CALL   000
+.................... 			morse(Argument0); // Send dixaine 
+0F0C:  BSF    03.5
+0F0D:  MOVF   36,W
+0F0E:  MOVWF  41
+0F0F:  BCF    0A.3
+0F10:  BCF    03.5
+0F11:  CALL   7BE
+0F12:  BSF    0A.3
+.................... 			if ( OP == 0x05 ) { 
+0F13:  BSF    03.5
+0F14:  MOVF   34,W
+0F15:  SUBLW  05
+0F16:  BTFSS  03.2
+0F17:  GOTO   71F
+.................... 				morse(Argument1); // Send unit 
+0F18:  MOVF   37,W
+0F19:  MOVWF  41
+0F1A:  BCF    0A.3
+0F1B:  BCF    03.5
+0F1C:  CALL   7BE
+0F1D:  BSF    0A.3
+0F1E:  BSF    03.5
+.................... 			} 
+.................... 			MORSE_WORD_DELAY; 
+0F1F:  BCF    0A.3
+0F20:  BCF    03.5
+0F21:  CALL   7D2
+0F22:  BSF    0A.3
+.................... 			morseStop(); 
+0F23:  BCF    0A.3
+0F24:  CALL   7E7
+0F25:  BSF    0A.3
+0F26:  BSF    03.5
+.................... 	} 
+.................... 	// }}} 
+.................... 	restart_wdt(); 
+0F27:  CLRWDT
+.................... } // }}} 
+....................  
+.................... void MasterHWReset(void) { // {{{ 
+.................... 	write_ee(GET_EEPROM_PTR(EEPROM_VALID),0x00); 
+*
+0DDE:  MOVLW  2D
+0DDF:  BSF    03.5
+0DE0:  MOVWF  49
+0DE1:  CLRF   4A
+0DE2:  BCF    0A.3
+0DE3:  BCF    03.5
+0DE4:  CALL   2FC
+0DE5:  BSF    0A.3
+.................... 	eeprom_init_check(); // Initialise RAM variables 
+0DE6:  BCF    0A.3
+0DE7:  CALL   31E
+0DE8:  BSF    0A.3
+.................... } // }}} 
+....................  
+.................... void resetAdminPwd(void) { // {{{ 
+.................... 	// The Admin password is reset in RAM only (Not EEPROM). 
+.................... 	AdminPwd[0] = GET_DEFAULT_VAL(AdminPwd); 
+*
+0BEA:  MOVLW  01
+0BEB:  BCF    03.5
+0BEC:  MOVWF  2F
+.................... 	AdminPwd[1] = GET_DEFAULT_VAL(AdminPwd1); 
+0BED:  MOVLW  22
+0BEE:  MOVWF  30
+.................... 	AdminPwd[2] = GET_DEFAULT_VAL(AdminPwd2); 
+0BEF:  CLRF   31
+.................... 	AdminPwd[3] = GET_DEFAULT_VAL(AdminPwd3); 
+0BF0:  CLRF   32
+.................... 	AdminPwd[4] = GET_DEFAULT_VAL(AdminPwd4); 
+0BF1:  CLRF   33
+.................... 	AdminPwd[5] = GET_DEFAULT_VAL(AdminPwd5); 
+0BF2:  CLRF   34
+.................... 	AdminPwd[6] = GET_DEFAULT_VAL(AdminPwd6); 
+0BF3:  CLRF   35
+.................... 	AdminPwd[7] = GET_DEFAULT_VAL(AdminPwd7); 
+0BF4:  CLRF   36
+0BF5:  BSF    03.5
+.................... 	// Make sure to update the CKSUM if we are going to write to EEPROM. 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd),GET_DEFAULT_VAL(AdminPwd)); 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd)+1,GET_DEFAULT_VAL(AdminPwd1)); 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd)+2,GET_DEFAULT_VAL(AdminPwd2)); 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd)+3,GET_DEFAULT_VAL(AdminPwd3)); 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd)+4,GET_DEFAULT_VAL(AdminPwd4)); 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd)+5,GET_DEFAULT_VAL(AdminPwd5)); 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd)+6,GET_DEFAULT_VAL(AdminPwd6)); 
+.................... 	//write_ee(GET_EEPROM_PTR(AdminPwd)+7,GET_DEFAULT_VAL(AdminPwd7)); 
+.................... } // }}} 
+....................  
+.................... int CheckPassword(void) { // {{{ 
+.................... 	int x; 
+.................... 	sDTMF PWD; 
+.................... 	sDTMF * dtmfPtr; 
+.................... 	int GoodPwd,Done; 
+.................... //	int ADDR; 
+.................... 	int keyIn; 
+.................... 	bit LastDigit; 
+.................... 	bit PwdEntry; 
+....................  
+.................... 	 
+.................... //	ADDR = dec2hex(DTMFSeq[0].Key , DTMFSeq[1].Key); 
+.................... 	 
+.................... 	dtmfPtr = &DTMFSeq[0];	 
+*
+0B46:  CLRF   36
+0B47:  MOVLW  6D
+0B48:  MOVWF  35
+....................  
+.................... 	// Syntax : <SiteID0><SiteID1><0><Pwd1><Pwd2>...<#> 
+.................... 	// 
+.................... 	PwdEntry = (DTMFSeq[2].Key == 0x00); 
+0B49:  BCF    3A.1
+0B4A:  BCF    03.5
+0B4B:  MOVF   6F,W
+0B4C:  ANDLW  0F
+0B4D:  BTFSS  03.2
+0B4E:  GOTO   352
+0B4F:  BSF    03.5
+0B50:  BSF    3A.1
+0B51:  BCF    03.5
+....................  
+.................... 	GoodPwd = 1; 
+0B52:  MOVLW  01
+0B53:  BSF    03.5
+0B54:  MOVWF  37
+.................... 	Done=0; 
+0B55:  CLRF   38
+.................... 	restart_wdt(); 
+0B56:  CLRWDT
+.................... //	if ( ADDR == SiteID ) { // 0x00 is the broadcast address 
+....................     if (PwdEntry) { 
+0B57:  BTFSS  3A.1
+0B58:  GOTO   3C1
+.................... 	    for(x=0;x<8;x++) { 
+0B59:  CLRF   33
+0B5A:  MOVF   33,W
+0B5B:  SUBLW  07
+0B5C:  BTFSS  03.0
+0B5D:  GOTO   3C0
+.................... 	    	if ( !Done ) { 
+0B5E:  MOVF   38,F
+0B5F:  BTFSS  03.2
+0B60:  GOTO   3BE
+.................... 	    		dtmfPtr = &DTMFSeq[x+3]; 
+0B61:  MOVLW  03
+0B62:  ADDWF  33,W
+0B63:  ADDLW  6D
+0B64:  BCF    03.5
+0B65:  MOVWF  21
+0B66:  CLRF   23
+0B67:  BTFSC  03.0
+0B68:  INCF   23,F
+0B69:  MOVF   21,W
+0B6A:  BSF    03.5
+0B6B:  MOVWF  35
+0B6C:  BCF    03.5
+0B6D:  MOVF   23,W
+0B6E:  BSF    03.5
+0B6F:  MOVWF  36
+.................... 	    		// EEPROM words are stored in 14 bits and look as if 
+.................... 	    		// they use two words. This is why the array index  
+.................... 	    		// is multiplied by 2, which may seem awkward. 
+.................... 	    		PWD.Key    = AdminPwd[x] & 0x0F; 
+0B70:  MOVLW  2F
+0B71:  ADDWF  33,W
+0B72:  MOVWF  04
+0B73:  BCF    03.7
+0B74:  MOVF   00,W
+0B75:  ANDLW  0F
+0B76:  ANDLW  0F
+0B77:  BCF    03.5
+0B78:  MOVWF  20
+0B79:  MOVLW  F0
+0B7A:  BSF    03.5
+0B7B:  ANDWF  34,W
+0B7C:  BCF    03.5
+0B7D:  IORWF  20,W
+0B7E:  BSF    03.5
+0B7F:  MOVWF  34
+.................... 	    		PWD.Last   = (AdminPwd[x] & 0x20) != 0; 
+0B80:  BCF    34.5
+0B81:  MOVLW  2F
+0B82:  ADDWF  33,W
+0B83:  MOVWF  04
+0B84:  BCF    03.7
+0B85:  MOVF   00,W
+0B86:  ANDLW  20
+0B87:  BTFSS  03.2
+0B88:  BSF    34.5
+.................... 	    		PWD.Strobe = (AdminPwd[x] & 0x10) != 0; 
+0B89:  BCF    34.4
+0B8A:  MOVLW  2F
+0B8B:  ADDWF  33,W
+0B8C:  MOVWF  04
+0B8D:  BCF    03.7
+0B8E:  MOVF   00,W
+0B8F:  ANDLW  10
+0B90:  BTFSS  03.2
+0B91:  BSF    34.4
+.................... 	    		  		 
+.................... 	    		keyIn = dtmfPtr->Key; 
+0B92:  MOVF   35,W
+0B93:  MOVWF  04
+0B94:  BCF    03.7
+0B95:  BTFSC  36.0
+0B96:  BSF    03.7
+0B97:  MOVF   00,W
+0B98:  ANDLW  0F
+0B99:  MOVWF  39
+.................... 	    		if(keyIn != PWD.Key) { 
+0B9A:  MOVF   34,W
+0B9B:  ANDLW  0F
+0B9C:  SUBWF  39,W
+0B9D:  BTFSC  03.2
+0B9E:  GOTO   3A0
+.................... 	    			GoodPwd = 0; 
+0B9F:  CLRF   37
+.................... 	    		} 
+.................... 	    		LastDigit = dtmfPtr->Last; 
+0BA0:  BCF    3A.0
+0BA1:  MOVF   35,W
+0BA2:  MOVWF  04
+0BA3:  BCF    03.7
+0BA4:  BTFSC  36.0
+0BA5:  BSF    03.7
+0BA6:  BTFSC  00.5
+0BA7:  BSF    3A.0
+.................... 	    		if(LastDigit != PWD.Last) { 
+0BA8:  BCF    03.5
+0BA9:  CLRF   20
+0BAA:  BSF    03.5
+0BAB:  BTFSS  34.5
+0BAC:  GOTO   3B0
+0BAD:  BCF    03.5
+0BAE:  BSF    20.0
+0BAF:  BSF    03.5
+0BB0:  MOVF   3A,W
+0BB1:  BCF    03.5
+0BB2:  XORWF  20,W
+0BB3:  ANDLW  01
+0BB4:  BTFSC  03.2
+0BB5:  GOTO   3B9
+.................... 	    			GoodPwd = 0; 
+0BB6:  BSF    03.5
+0BB7:  CLRF   37
+0BB8:  BCF    03.5
+.................... 	    		} 
+.................... 	    		if ( PWD.Last ) { 
+0BB9:  BSF    03.5
+0BBA:  BTFSS  34.5
+0BBB:  GOTO   3BE
+.................... 	    			Done = 1; 
+0BBC:  MOVLW  01
+0BBD:  MOVWF  38
+.................... 	    		} 
+.................... 	    	} 
+.................... 	    } 
+0BBE:  INCF   33,F
+0BBF:  GOTO   35A
+.................... 	} 
+.................... 	else { 
+0BC0:  GOTO   3C2
+.................... 		GoodPwd = 0; 
+0BC1:  CLRF   37
+.................... 	} 
+.................... 	restart_wdt(); 
+0BC2:  CLRWDT
+.................... 	return(GoodPwd); 
+0BC3:  MOVF   37,W
+0BC4:  BCF    03.5
+0BC5:  MOVWF  21
+.................... } // }}} 
+....................  
+.................... int CheckPWDResetPassword (void) { // {{{ 
+.................... 	int x; 
+.................... 	int ADDR; 
+.................... 	sDTMF PWD; 
+.................... 	sDTMF * dtmfPtr; 
+.................... 	int GoodPwd,Done; 
+.................... 	const int PWDReset[] = {0x01,0x04,0x09,0x00,0x08,0x07,0x05,0x22}; 
+.................... 	 
+.................... 	dtmfPtr = &DTMFSeq[0];	 
+.................... 	GoodPwd = 1; 
+.................... 	Done=0; 
+.................... 	restart_wdt(); 
+.................... 	ADDR = dec2hex(DTMFSeq[0].Key , DTMFSeq[1].Key); 
+.................... 	if ( ADDR == SiteID ) { // 0x00 is the broadcast address 
+.................... 		for(x=0;x<8;x++) { 
+.................... 			if ( !Done ) { 
+.................... 				dtmfPtr = &DTMFSeq[x+2]; 
+.................... 				// EEPROM words are stored in 14 bits and look as if 
+.................... 				// they use two words. This is why the array index  
+.................... 				// is multiplied by 2, which may seem awkward. 
+.................... 				PWD.Key    = (PWDReset[x] & 0x0F); 
+.................... 				PWD.Last   = (PWDReset[x] & 0x20) != 0; 
+.................... 				PWD.Strobe = (PWDReset[x] & 0x10)!=0; 
+.................... 				if(dtmfPtr->Key != PWD.Key) { 
+.................... 					GoodPwd = 0; 
+.................... 				} 
+.................... 				if(dtmfPtr->Last != PWD.Last) { 
+.................... 					GoodPwd = 0; 
+.................... 				} 
+.................... 				if ( PWD.Last ) { 
+.................... 					Done = 1; 
+.................... 				} 
+.................... 			} 
+.................... 		} 
+.................... 	} 
+.................... 	restart_wdt(); 
+.................... 	return(GoodPwd); 
+.................... } // }}} 
+....................  
+.................... void dit (void) { // {{{ 
+....................     unsigned int16 delay; 
+....................     delay = DitDelay * MORSE_MULTIPLIER_ISR_ON; 
+*
+084F:  MOVF   3D,W
+0850:  BSF    03.5
+0851:  MOVWF  48
+0852:  MOVLW  0A
+0853:  MOVWF  49
+0854:  BCF    0A.3
+0855:  BCF    03.5
+0856:  CALL   4ED
+0857:  BSF    0A.3
+0858:  MOVF   21,W
+0859:  BSF    03.5
+085A:  MOVWF  4A
+085B:  MOVLW  06
+085C:  MOVWF  4B
+085D:  BCF    0A.3
+085E:  BCF    03.5
+085F:  CALL   5CE
+0860:  BSF    0A.3
+0861:  BSF    03.5
+0862:  CLRF   46
+0863:  BCF    03.5
+0864:  MOVF   21,W
+0865:  BSF    03.5
+0866:  MOVWF  45
+....................     StartPWM(PWMFreqDivider); // Argument is frequency divider (32KHz max)/1 
+0867:  MOVLW  02
+0868:  MOVWF  47
+0869:  BCF    0A.3
+086A:  BCF    03.5
+086B:  CALL   607
+086C:  BSF    0A.3
+....................     delay_ms(delay); 
+086D:  BSF    03.5
+086E:  MOVF   46,W
+086F:  MOVWF  47
+0870:  INCF   47,F
+0871:  DECF   47,F
+0872:  BTFSC  03.2
+0873:  GOTO   07C
+0874:  MOVLW  FF
+0875:  MOVWF  48
+0876:  BCF    0A.3
+0877:  BCF    03.5
+0878:  CALL   5EF
+0879:  BSF    0A.3
+087A:  BSF    03.5
+087B:  GOTO   071
+087C:  MOVF   45,W
+087D:  MOVWF  48
+087E:  BCF    0A.3
+087F:  BCF    03.5
+0880:  CALL   5EF
+0881:  BSF    0A.3
+....................     StopPWM(); 
+0882:  BCF    0A.3
+0883:  CALL   63A
+0884:  BSF    0A.3
+....................     restart_wdt(); 
+0885:  CLRWDT
+....................     delay_ms(DitDelay * MORSE_MULTIPLIER_ISR_OFF); 
+0886:  MOVF   3D,W
+0887:  BSF    03.5
+0888:  MOVWF  48
+0889:  MOVLW  0A
+088A:  MOVWF  49
+088B:  BCF    0A.3
+088C:  BCF    03.5
+088D:  CALL   4ED
+088E:  BSF    0A.3
+088F:  MOVF   21,W
+0890:  BSF    03.5
+0891:  MOVWF  47
+0892:  MOVWF  48
+0893:  BCF    0A.3
+0894:  BCF    03.5
+0895:  CALL   5EF
+0896:  BSF    0A.3
+.................... }	// }}} 
+0897:  RETLW  00
+....................  
+.................... void dah (void) { // {{{ 
+....................     unsigned int16 delay; 
+....................     delay = DAH_DURATION_RATIO * DitDelay * MORSE_MULTIPLIER_ISR_ON; 
+0898:  MOVLW  03
+0899:  BSF    03.5
+089A:  MOVWF  48
+089B:  BCF    03.5
+089C:  MOVF   3D,W
+089D:  BSF    03.5
+089E:  MOVWF  49
+089F:  BCF    0A.3
+08A0:  BCF    03.5
+08A1:  CALL   4ED
+08A2:  BSF    0A.3
+08A3:  MOVF   21,W
+08A4:  BSF    03.5
+08A5:  MOVWF  48
+08A6:  MOVLW  0A
+08A7:  MOVWF  49
+08A8:  BCF    0A.3
+08A9:  BCF    03.5
+08AA:  CALL   4ED
+08AB:  BSF    0A.3
+08AC:  MOVF   21,W
+08AD:  BSF    03.5
+08AE:  MOVWF  4A
+08AF:  MOVLW  06
+08B0:  MOVWF  4B
+08B1:  BCF    0A.3
+08B2:  BCF    03.5
+08B3:  CALL   5CE
+08B4:  BSF    0A.3
+08B5:  BSF    03.5
+08B6:  CLRF   46
+08B7:  BCF    03.5
+08B8:  MOVF   21,W
+08B9:  BSF    03.5
+08BA:  MOVWF  45
+.................... 	StartPWM(PWMFreqDivider); 
+08BB:  MOVLW  02
+08BC:  MOVWF  47
+08BD:  BCF    0A.3
+08BE:  BCF    03.5
+08BF:  CALL   607
+08C0:  BSF    0A.3
+.................... 	delay_ms(delay); 
+08C1:  BSF    03.5
+08C2:  MOVF   46,W
+08C3:  MOVWF  47
+08C4:  INCF   47,F
+08C5:  DECF   47,F
+08C6:  BTFSC  03.2
+08C7:  GOTO   0D0
+08C8:  MOVLW  FF
+08C9:  MOVWF  48
+08CA:  BCF    0A.3
+08CB:  BCF    03.5
+08CC:  CALL   5EF
+08CD:  BSF    0A.3
+08CE:  BSF    03.5
+08CF:  GOTO   0C5
+08D0:  MOVF   45,W
+08D1:  MOVWF  48
+08D2:  BCF    0A.3
+08D3:  BCF    03.5
+08D4:  CALL   5EF
+08D5:  BSF    0A.3
+.................... 	StopPWM(); 
+08D6:  BCF    0A.3
+08D7:  CALL   63A
+08D8:  BSF    0A.3
+.................... 	restart_wdt(); 
+08D9:  CLRWDT
+.................... 	delay_ms(DitDelay * MORSE_MULTIPLIER_ISR_OFF); 
+08DA:  MOVF   3D,W
+08DB:  BSF    03.5
+08DC:  MOVWF  48
+08DD:  MOVLW  0A
+08DE:  MOVWF  49
+08DF:  BCF    0A.3
+08E0:  BCF    03.5
+08E1:  CALL   4ED
+08E2:  BSF    0A.3
+08E3:  MOVF   21,W
+08E4:  BSF    03.5
+08E5:  MOVWF  47
+08E6:  MOVWF  48
+08E7:  BCF    0A.3
+08E8:  BCF    03.5
+08E9:  CALL   5EF
+08EA:  BSF    0A.3
+.................... 	 
+.................... } // }}} 
+08EB:  RETLW  00
+....................  
+.................... void beep (void) { // {{{ 
+....................     unsigned int16 delay; 
+.................... 	PWM_ACTIVE=1; 
+*
+0651:  BSF    6A.6
+0652:  CLRF   2E
+0653:  BTFSC  0B.7
+0654:  BSF    2E.7
+0655:  BCF    0B.7
+.................... 	ptt(); 
+0656:  CALL   16E
+0657:  BTFSC  2E.7
+0658:  BSF    0B.7
+.................... 	delay = DAH_DURATION_RATIO * DitDelay * MORSE_MULTIPLIER_ISR_ON; 
+0659:  MOVLW  03
+065A:  BSF    03.5
+065B:  MOVWF  48
+065C:  BCF    03.5
+065D:  MOVF   3D,W
+065E:  BSF    03.5
+065F:  MOVWF  49
+0660:  BCF    03.5
+0661:  CALL   4ED
+0662:  MOVF   21,W
+0663:  BSF    03.5
+0664:  MOVWF  48
+0665:  MOVLW  0A
+0666:  MOVWF  49
+0667:  BCF    03.5
+0668:  CALL   4ED
+0669:  MOVF   21,W
+066A:  BSF    03.5
+066B:  MOVWF  4A
+066C:  MOVLW  06
+066D:  MOVWF  4B
+066E:  BCF    03.5
+066F:  CALL   5CE
+0670:  BSF    03.5
+0671:  CLRF   36
+0672:  BCF    03.5
+0673:  MOVF   21,W
+0674:  BSF    03.5
+0675:  MOVWF  35
+.................... 	delay_ms(PTT_PWM_USER_DELAY); 
+0676:  MOVLW  08
+0677:  MOVWF  37
+0678:  MOVLW  FA
+0679:  MOVWF  48
+067A:  BCF    03.5
+067B:  CALL   5EF
+067C:  BSF    03.5
+067D:  DECFSZ 37,F
+067E:  GOTO   678
+.................... 	StartPWM(3); 
+067F:  MOVLW  03
+0680:  MOVWF  47
+0681:  BCF    03.5
+0682:  CALL   607
+.................... 	delay_ms(delay); 
+0683:  BSF    03.5
+0684:  MOVF   36,W
+0685:  MOVWF  37
+0686:  INCF   37,F
+0687:  DECF   37,F
+0688:  BTFSC  03.2
+0689:  GOTO   690
+068A:  MOVLW  FF
+068B:  MOVWF  48
+068C:  BCF    03.5
+068D:  CALL   5EF
+068E:  BSF    03.5
+068F:  GOTO   687
+0690:  MOVF   35,W
+0691:  MOVWF  48
+0692:  BCF    03.5
+0693:  CALL   5EF
+.................... 	StopPWM(); 
+0694:  CALL   63A
+.................... 	restart_wdt(); 
+0695:  CLRWDT
+.................... 	delay_ms(PTT_PWM_USER_DELAY); 
+0696:  MOVLW  08
+0697:  BSF    03.5
+0698:  MOVWF  37
+0699:  MOVLW  FA
+069A:  MOVWF  48
+069B:  BCF    03.5
+069C:  CALL   5EF
+069D:  BSF    03.5
+069E:  DECFSZ 37,F
+069F:  GOTO   699
+.................... 	PWM_ACTIVE=0; 
+06A0:  BCF    03.5
+06A1:  BCF    6A.6
+06A2:  CLRF   2E
+06A3:  BTFSC  0B.7
+06A4:  BSF    2E.7
+06A5:  BCF    0B.7
+.................... 	ptt(); 
+06A6:  CALL   16E
+06A7:  BTFSC  2E.7
+06A8:  BSF    0B.7
+.................... } // }}} 
+06A9:  RETLW  00
+....................  
+.................... void morsechar(int c) { // {{{ 
+.................... 	int mc; 
+.................... 	int x; 
+....................  
+.................... 	mc = cMorseChar[c];  
+*
+08EC:  BSF    03.5
+08ED:  MOVF   42,W
+08EE:  BCF    0A.3
+08EF:  BCF    03.5
+08F0:  CALL   057
+08F1:  BSF    0A.3
+08F2:  MOVWF  21
+08F3:  BSF    03.5
+08F4:  MOVWF  43
+.................... 	 
+.................... 	for(x=0;x<4;x++) { 
+08F5:  CLRF   44
+08F6:  MOVF   44,W
+08F7:  SUBLW  03
+08F8:  BTFSS  03.0
+08F9:  GOTO   110
+.................... 		switch(mc & 0xc0) { // Check two MSB's 
+08FA:  MOVF   43,W
+08FB:  ANDLW  C0
+08FC:  XORLW  40
+08FD:  BCF    03.5
+08FE:  BTFSC  03.2
+08FF:  GOTO   104
+0900:  XORLW  C0
+0901:  BTFSC  03.2
+0902:  GOTO   106
+0903:  GOTO   108
+.................... 			case(0x40): 
+.................... 				dit(); 
+0904:  CALL   04F
+.................... 				break; 
+0905:  GOTO   109
+.................... 			case(0x80): 
+.................... 				dah(); 
+0906:  CALL   098
+.................... 				break; 
+0907:  GOTO   109
+.................... 			default: 
+.................... 				break; 
+0908:  GOTO   109
+.................... 		} 
+.................... 		mc = mc << 2; // Shift two MSB's out and continue with next ones 
+0909:  BSF    03.5
+090A:  RLF    43,F
+090B:  RLF    43,F
+090C:  MOVLW  FC
+090D:  ANDWF  43,F
+.................... 	} 
+090E:  INCF   44,F
+090F:  GOTO   0F6
+.................... 	if ( c < 10 ) { // Digits --> add the 5th dit or dah. 
+0910:  MOVF   42,W
+0911:  SUBLW  09
+0912:  BTFSS  03.0
+0913:  GOTO   11F
+.................... 		if ( c < 5 ) { 
+0914:  MOVF   42,W
+0915:  SUBLW  04
+0916:  BTFSS  03.0
+0917:  GOTO   11C
+.................... 			dah(); 
+0918:  BCF    03.5
+0919:  CALL   098
+.................... 		} 
+.................... 		else { 
+091A:  GOTO   11E
+091B:  BSF    03.5
+.................... 			dit(); 
+091C:  BCF    03.5
+091D:  CALL   04F
+091E:  BSF    03.5
+.................... 		} 
+.................... 	} 
+.................... 	delay_ms(DAH_DURATION_RATIO * DitDelay * MORSE_MULTIPLIER_ISR_OFF); 
+091F:  MOVLW  03
+0920:  MOVWF  48
+0921:  BCF    03.5
+0922:  MOVF   3D,W
+0923:  BSF    03.5
+0924:  MOVWF  49
+0925:  BCF    0A.3
+0926:  BCF    03.5
+0927:  CALL   4ED
+0928:  BSF    0A.3
+0929:  MOVF   21,W
+092A:  BSF    03.5
+092B:  MOVWF  48
+092C:  MOVLW  0A
+092D:  MOVWF  49
+092E:  BCF    0A.3
+092F:  BCF    03.5
+0930:  CALL   4ED
+0931:  BSF    0A.3
+0932:  MOVF   21,W
+0933:  BSF    03.5
+0934:  MOVWF  46
+0935:  MOVWF  48
+0936:  BCF    0A.3
+0937:  BCF    03.5
+0938:  CALL   5EF
+0939:  BSF    0A.3
+.................... 	return; 
+.................... } // }}} 
+093A:  RETLW  00
+....................  
+.................... void ptt (void) { // {{{ 
+.................... 	int ptt_master; 
+....................  
+.................... 	// When in Admin mode, also sent PTT to link radio (0) 
+.................... 	if ( STATE != ADMIN ) { 
+*
+016E:  BSF    03.5
+016F:  DECFSZ 20,W
+0170:  GOTO   172
+0171:  GOTO   173
+.................... 		AdminPtt = 0x00; 
+0172:  CLRF   25
+.................... 	} 
+.................... 	if ( Tail || PWM_ACTIVE ) { 
+0173:  BCF    03.5
+0174:  BTFSC  6A.3
+0175:  GOTO   178
+0176:  BTFSS  6A.6
+0177:  GOTO   18B
+.................... 		if (DiagTail) { // Send PWM on Link radio when DiagTail is on 
+0178:  BTFSS  6A.4
+0179:  GOTO   182
+.................... 			AdminPtt|=0x01; 
+017A:  BSF    03.5
+017B:  BSF    25.0
+.................... // Don't sent DiagTail on Last_COR radio 
+....................       ptt_master = DiagTailPTT; 
+017C:  BCF    03.5
+017D:  MOVF   5E,W
+017E:  BSF    03.5
+017F:  MOVWF  4E
+.................... 		} else { 
+0180:  GOTO   189
+0181:  BCF    03.5
+.................... 	          ptt_master = AdminPtt | PWMPTT | PTT; 
+0182:  BSF    03.5
+0183:  MOVF   25,W
+0184:  BCF    03.5
+0185:  IORWF  3C,W
+0186:  IORWF  5F,W
+0187:  BSF    03.5
+0188:  MOVWF  4E
+.................... 		} 
+.................... 	} 
+.................... 	else { 
+0189:  GOTO   18E
+018A:  BCF    03.5
+.................... 		ptt_master = PTT; 
+018B:  MOVF   5F,W
+018C:  BSF    03.5
+018D:  MOVWF  4E
+.................... 	} 
+.................... 	PTT0 = (PTT_ENABLE & ptt_master & 0x01) != 0;		 
+018E:  BCF    2E.0
+018F:  MOVF   21,W
+0190:  ANDWF  4E,W
+0191:  ANDLW  01
+0192:  BTFSS  03.2
+0193:  BSF    2E.0
+.................... 	PTT1 = (PTT_ENABLE & ptt_master & 0x02) != 0; 
+0194:  BCF    2E.1
+0195:  MOVF   21,W
+0196:  ANDWF  4E,W
+0197:  ANDLW  02
+0198:  BTFSS  03.2
+0199:  BSF    2E.1
+.................... 	PTT2 = (PTT_ENABLE & ptt_master & 0x04) != 0; 
+019A:  BCF    2E.2
+019B:  MOVF   21,W
+019C:  ANDWF  4E,W
+019D:  ANDLW  04
+019E:  BTFSS  03.2
+019F:  BSF    2E.2
+.................... 	output_bit(PTT0_PIN,PTT0); 
+01A0:  BTFSC  2E.0
+01A1:  GOTO   1A6
+01A2:  BCF    03.5
+01A3:  BCF    07.4
+01A4:  GOTO   1A8
+01A5:  BSF    03.5
+01A6:  BCF    03.5
+01A7:  BSF    07.4
+.................... 	output_bit(PTT1_PIN,PTT1); 
+01A8:  BSF    03.5
+01A9:  BTFSC  2E.1
+01AA:  GOTO   1AF
+01AB:  BCF    03.5
+01AC:  BCF    07.5
+01AD:  GOTO   1B1
+01AE:  BSF    03.5
+01AF:  BCF    03.5
+01B0:  BSF    07.5
+.................... 	output_bit(PTT2_PIN,PTT2); 
+01B1:  BSF    03.5
+01B2:  BTFSC  2E.2
+01B3:  GOTO   1B8
+01B4:  BCF    03.5
+01B5:  BCF    07.6
+01B6:  GOTO   1BA
+01B7:  BSF    03.5
+01B8:  BCF    03.5
+01B9:  BSF    07.6
+.................... } // }}} 
+01BA:  RETLW  00
+....................  
+.................... void morseStart(int wait) { // {{{ 
+.................... 	// Disable all RX relays that are not enabled. 
+.................... 	// A RX relay may be activated, even when it is disabled, 
+.................... 	// simply because that is the only COR active. 
+.................... 	if ( (Enable & 0x01) == 0 ) { 
+*
+0800:  MOVF   37,W
+0801:  ANDLW  01
+0802:  BTFSS  03.2
+0803:  GOTO   005
+.................... 		output_bit(RX_EN0,0); 
+0804:  BCF    07.0
+.................... 	} 
+.................... 	if ( (Enable & 0x02) == 0 ) { 
+0805:  MOVF   37,W
+0806:  ANDLW  02
+0807:  BTFSS  03.2
+0808:  GOTO   00A
+.................... 		output_bit(RX_EN1,0); 
+0809:  BCF    07.1
+.................... 	} 
+.................... 	if ( (Enable & 0x04) == 0 ) { 
+080A:  MOVF   37,W
+080B:  ANDLW  04
+080C:  BTFSS  03.2
+080D:  GOTO   00F
+.................... 		output_bit(RX_EN2,0); 
+080E:  BCF    07.2
+.................... 	} 
+....................   AuxTimer = AUX_DELAY_S(5); 
+080F:  MOVLW  98
+0810:  BSF    03.5
+0811:  MOVWF  22
+....................   PWM_ACTIVE = 1; // Enable PTT for PWM 
+0812:  BCF    03.5
+0813:  BSF    6A.6
+....................   if ( wait ) { 
+0814:  BSF    03.5
+0815:  MOVF   3D,F
+0816:  BTFSC  03.2
+0817:  GOTO   037
+....................     while ( AuxTimer && ((int8)COR!=0) ) { 
+0818:  MOVF   22,F
+0819:  BTFSC  03.2
+081A:  GOTO   020
+081B:  MOVF   2C,F
+081C:  BTFSC  03.2
+081D:  GOTO   020
+....................       restart_wdt(); 
+081E:  CLRWDT
+....................     } 
+081F:  GOTO   018
+0820:  BCF    03.5
+0821:  CLRF   2E
+0822:  BTFSC  0B.7
+0823:  BSF    2E.7
+0824:  BCF    0B.7
+.................... 	  ptt(); 
+0825:  BCF    0A.3
+0826:  CALL   16E
+0827:  BSF    0A.3
+0828:  BTFSC  2E.7
+0829:  BSF    0B.7
+....................     delay_ms(PTT_PWM_USER_DELAY); 
+082A:  MOVLW  08
+082B:  BSF    03.5
+082C:  MOVWF  3E
+082D:  MOVLW  FA
+082E:  MOVWF  48
+082F:  BCF    0A.3
+0830:  BCF    03.5
+0831:  CALL   5EF
+0832:  BSF    0A.3
+0833:  BSF    03.5
+0834:  DECFSZ 3E,F
+0835:  GOTO   02D
+....................   } else { 
+0836:  GOTO   04D
+0837:  BCF    03.5
+0838:  CLRF   2E
+0839:  BTFSC  0B.7
+083A:  BSF    2E.7
+083B:  BCF    0B.7
+.................... 	  ptt(); 
+083C:  BCF    0A.3
+083D:  CALL   16E
+083E:  BSF    0A.3
+083F:  BTFSC  2E.7
+0840:  BSF    0B.7
+....................   	delay_ms(PTT_PWM_BEGIN_DELAY); // wait 1 sec (ERROR HERE ! WDT problem !!!) 
+0841:  MOVLW  05
+0842:  BSF    03.5
+0843:  MOVWF  3E
+0844:  MOVLW  6E
+0845:  MOVWF  48
+0846:  BCF    0A.3
+0847:  BCF    03.5
+0848:  CALL   5EF
+0849:  BSF    0A.3
+084A:  BSF    03.5
+084B:  DECFSZ 3E,F
+084C:  GOTO   044
+....................   } 
+.................... } // }}} 
+084D:  BCF    03.5
+084E:  RETLW  00
+....................  
+.................... void morseStop(void) { // {{{ 
+.................... 	delay_ms(PTT_PWM_END_DELAY); 
+*
+07E7:  MOVLW  04
+07E8:  BSF    03.5
+07E9:  MOVWF  3D
+07EA:  MOVLW  E1
+07EB:  MOVWF  48
+07EC:  BCF    03.5
+07ED:  CALL   5EF
+07EE:  BSF    03.5
+07EF:  DECFSZ 3D,F
+07F0:  GOTO   7EA
+.................... 	PWM_ACTIVE = 0; // Disable PTT for PWM 
+07F1:  BCF    03.5
+07F2:  BCF    6A.6
+07F3:  CLRF   2E
+07F4:  BTFSC  0B.7
+07F5:  BSF    2E.7
+07F6:  BCF    0B.7
+.................... 	ptt(); // clear PTT signals if not required. 
+07F7:  CALL   16E
+07F8:  BTFSC  2E.7
+07F9:  BSF    0B.7
+.................... } // }}} 
+07FA:  RETLW  00
+....................  
+.................... void morse(int reg) { // {{{ 
+.................... // reg is from 0 to 36 
+.................... 	if ( reg <= 36 ) { 
+*
+07BE:  BSF    03.5
+07BF:  MOVF   41,W
+07C0:  SUBLW  24
+07C1:  BTFSS  03.0
+07C2:  GOTO   7CB
+.................... 		morsechar(reg); 
+07C3:  MOVF   41,W
+07C4:  MOVWF  42
+07C5:  BSF    0A.3
+07C6:  BCF    03.5
+07C7:  CALL   0EC
+07C8:  BCF    0A.3
+.................... 	} 
+.................... 	else { 
+07C9:  GOTO   7D1
+07CA:  BSF    03.5
+.................... 		morsechar(0x0E); 
+07CB:  MOVLW  0E
+07CC:  MOVWF  42
+07CD:  BSF    0A.3
+07CE:  BCF    03.5
+07CF:  CALL   0EC
+07D0:  BCF    0A.3
+.................... 	} 
+.................... 	//delay_ms(DitDelay * 7 * MORSE_MULTIPLIER_ISR_ON); 
+.................... }	// }}} 
+07D1:  RETLW  00
+....................  
+.................... void processUserFunctions(int Key) { // {{{ 
+.................... 	int UserFct; 
+.................... 	int value; 
+.................... 	// User functions have the following format: 
+.................... 	// * (optional, to clear sequence) 
+.................... 	// 39* 
+.................... 	// <Digit0><Digit1>[* or #] 
+.................... 	if ( (DTMFPtr == &DTMFSeq[2]) && ((Key == dp) || (Key == ds)) ) { // Only 3 digits entered and 3rd is * or # 
+*
+06AA:  MOVF   7B,W
+06AB:  SUBLW  6F
+06AC:  BTFSS  03.2
+06AD:  GOTO   716
+06AE:  MOVF   7C,F
+06AF:  BTFSS  03.2
+06B0:  GOTO   716
+06B1:  BSF    03.5
+06B2:  MOVF   32,W
+06B3:  SUBLW  0C
+06B4:  BTFSC  03.2
+06B5:  GOTO   6BC
+06B6:  MOVF   32,W
+06B7:  SUBLW  0B
+06B8:  BTFSC  03.2
+06B9:  GOTO   6BC
+06BA:  BCF    03.5
+06BB:  GOTO   716
+.................... 		// DTMFPtr points to the DTMFSeq[x] index of the current digit. 
+.................... 		if ( Key == dp ) { 
+06BC:  MOVF   32,W
+06BD:  SUBLW  0C
+06BE:  BTFSS  03.2
+06BF:  GOTO   6C2
+.................... 				value = 0; // # is to disable a user function 
+06C0:  CLRF   34
+.................... 		} else { 
+06C1:  GOTO   6C4
+.................... 				value = 1; // * is to enable a user function 
+06C2:  MOVLW  01
+06C3:  MOVWF  34
+.................... 		} 
+.................... 		UserFct = dec2hex(DTMFSeq[0].Key,DTMFSeq[1].Key); 
+06C4:  BCF    03.5
+06C5:  MOVF   6D,W
+06C6:  ANDLW  0F
+06C7:  BSF    03.5
+06C8:  MOVWF  35
+06C9:  BCF    03.5
+06CA:  MOVF   6E,W
+06CB:  ANDLW  0F
+06CC:  BSF    03.5
+06CD:  MOVWF  36
+06CE:  MOVF   35,W
+06CF:  MOVWF  3F
+06D0:  MOVF   36,W
+06D1:  MOVWF  40
+06D2:  BCF    03.5
+06D3:  CALL   53A
+06D4:  MOVF   21,W
+06D5:  BSF    03.5
+06D6:  MOVWF  33
+.................... 		if ( UserFct == UserFunction1Reg ) { 
+06D7:  BCF    03.5
+06D8:  MOVF   53,W
+06D9:  BSF    03.5
+06DA:  SUBWF  33,W
+06DB:  BTFSS  03.2
+06DC:  GOTO   6E7
+.................... 			ExecOP(UserFunction1Op,value); 
+06DD:  BCF    03.5
+06DE:  MOVF   54,W
+06DF:  BSF    03.5
+06E0:  MOVWF  37
+06E1:  MOVF   34,W
+06E2:  MOVWF  38
+06E3:  BCF    03.5
+06E4:  CALL   54B
+.................... 			beep(); 
+06E5:  CALL   651
+06E6:  BSF    03.5
+.................... 		} 
+.................... 		if ( UserFct == UserFunction2Reg ) { 
+06E7:  BCF    03.5
+06E8:  MOVF   55,W
+06E9:  BSF    03.5
+06EA:  SUBWF  33,W
+06EB:  BTFSS  03.2
+06EC:  GOTO   6F7
+.................... 			ExecOP(UserFunction2Op,value); 
+06ED:  BCF    03.5
+06EE:  MOVF   56,W
+06EF:  BSF    03.5
+06F0:  MOVWF  37
+06F1:  MOVF   34,W
+06F2:  MOVWF  38
+06F3:  BCF    03.5
+06F4:  CALL   54B
+.................... 			beep(); 
+06F5:  CALL   651
+06F6:  BSF    03.5
+.................... 		} 
+.................... 		if ( UserFct == UserFunction3Reg ) { 
+06F7:  BCF    03.5
+06F8:  MOVF   57,W
+06F9:  BSF    03.5
+06FA:  SUBWF  33,W
+06FB:  BTFSS  03.2
+06FC:  GOTO   707
+.................... 			ExecOP(UserFunction3Op,value); 
+06FD:  BCF    03.5
+06FE:  MOVF   58,W
+06FF:  BSF    03.5
+0700:  MOVWF  37
+0701:  MOVF   34,W
+0702:  MOVWF  38
+0703:  BCF    03.5
+0704:  CALL   54B
+.................... 			beep(); 
+0705:  CALL   651
+0706:  BSF    03.5
+.................... 		} 
+.................... 		if ( UserFct == UserFunction4Reg ) { 
+0707:  BCF    03.5
+0708:  MOVF   59,W
+0709:  BSF    03.5
+070A:  SUBWF  33,W
+070B:  BTFSS  03.2
+070C:  GOTO   717
+.................... 			ExecOP(UserFunction4Op,value); 
+070D:  BCF    03.5
+070E:  MOVF   5A,W
+070F:  BSF    03.5
+0710:  MOVWF  37
+0711:  MOVF   34,W
+0712:  MOVWF  38
+0713:  BCF    03.5
+0714:  CALL   54B
+.................... 			beep(); 
+0715:  CALL   651
+0716:  BSF    03.5
+.................... 		} 
+.................... 	} 
+.................... 		 
+.................... } // }}} 
+0717:  BCF    03.5
+0718:  BSF    0A.3
+0719:  GOTO   2FF (RETURN)
+....................  
+.................... void TempCtrl(void) { // {{{ 
+.................... 	int OP; 
+.................... 	int Temp40; 
+.................... 	int Inputs; 
+.................... 	int Outputs; 
+.................... 	bit bitValue; 
+.................... 	int value; 
+.................... 	OP = 0; 
+*
+09C7:  BSF    03.5
+09C8:  CLRF   31
+....................  
+.................... 	if ( TempUpdate ) { 
+09C9:  BCF    03.5
+09CA:  BTFSS  6A.2
+09CB:  GOTO   20E
+.................... 		TempUpdate = 0; 
+09CC:  BCF    6A.2
+.................... 		TempC = (signed int)((125*Temp/256) - 273); 
+09CD:  BSF    03.5
+09CE:  CLRF   38
+09CF:  MOVLW  7D
+09D0:  MOVWF  37
+09D1:  BCF    03.5
+09D2:  MOVF   64,W
+09D3:  BSF    03.5
+09D4:  MOVWF  3A
+09D5:  BCF    03.5
+09D6:  MOVF   63,W
+09D7:  BSF    03.5
+09D8:  MOVWF  39
+*
+09F5:  BCF    03.5
+09F6:  MOVF   22,W
+09F7:  BSF    03.5
+09F8:  MOVWF  38
+09F9:  BCF    03.5
+09FA:  MOVF   21,W
+09FB:  BSF    03.5
+09FC:  MOVWF  37
+09FD:  CLRF   3A
+09FE:  MOVLW  11
+09FF:  SUBWF  38,W
+0A00:  BCF    03.5
+0A01:  MOVWF  20
+0A02:  BSF    03.5
+0A03:  MOVF   3A,W
+0A04:  BCF    03.5
+0A05:  MOVWF  23
+0A06:  MOVLW  01
+0A07:  BTFSS  03.0
+0A08:  MOVLW  02
+0A09:  SUBWF  23,F
+0A0A:  MOVF   20,W
+0A0B:  BSF    03.5
+0A0C:  MOVWF  2D
+0A0D:  BCF    03.5
+.................... 	} 
+.................... 	// Temp is created by the A/D converter. 
+.................... 	// It ranges from 0 to 1023. 
+.................... 	// At 25DegC, the pin has 2.95Volts.  
+.................... 	// The Temp register then holds 610 
+.................... 	//TempC = (500 * Temp / 1024)-273; 
+.................... 	//AuxCfg[2] --> AUX1 is reserved in output for temperature control 
+.................... 	//		 
+.................... 	//  
+.................... 	Inputs  = 0x00; 
+0A0E:  BSF    03.5
+0A0F:  CLRF   33
+.................... 	Outputs = 0x00; 
+0A10:  CLRF   34
+.................... 	// Determine Aux port directions {{{ 
+.................... 	// 00 In(1),In(2) 
+.................... 	// 01 Out(1),In(1) 
+.................... 	// 10 In(2),Out(2) 
+.................... 	// 11 Out(1),Out(2) 
+.................... 	// AuxCfg AuxOut1 AuxOut2 AuxIn1 AuxIn2 
+.................... 	// 00	  X       X 
+.................... 	// 01	  X               X 
+.................... 	// 10             X              X 
+.................... 	// 11                     X      X 
+.................... 	if ( AuxCfg & 0x01 ) { 
+0A11:  BCF    03.5
+0A12:  BTFSS  4F.0
+0A13:  GOTO   218
+.................... 		Inputs |= 0x01; 
+0A14:  BSF    03.5
+0A15:  BSF    33.0
+.................... 	} else { 
+0A16:  GOTO   21A
+0A17:  BCF    03.5
+.................... 		Outputs |= 0x02; 
+0A18:  BSF    03.5
+0A19:  BSF    34.1
+.................... 	}		 
+.................... 	if ( AuxCfg & 0x02 ) { 
+0A1A:  BCF    03.5
+0A1B:  BTFSS  4F.1
+0A1C:  GOTO   221
+.................... 		Inputs |= 0x02; 
+0A1D:  BSF    03.5
+0A1E:  BSF    33.1
+.................... 	} else {  
+0A1F:  GOTO   223
+0A20:  BCF    03.5
+.................... 		Outputs |= 0x01; 
+0A21:  BSF    03.5
+0A22:  BSF    34.0
+.................... 	} 
+.................... //	} // }}} 
+.................... 	// Process aux input 1 port {{{ 
+.................... 	if ( Inputs & 0x01 ) { 
+0A23:  BTFSS  33.0
+0A24:  GOTO   23F
+.................... 		SET_AUX1_INPUT; 
+0A25:  BSF    05.5
+.................... 		// Aux2 output is disabled. 
+.................... 		if ( input(AUX1_INPUT_PIN) ) { 
+0A26:  BCF    03.5
+0A27:  BTFSS  05.5
+0A28:  GOTO   22E
+.................... 			value = 1; 
+0A29:  MOVLW  01
+0A2A:  BSF    03.5
+0A2B:  MOVWF  36
+.................... 		} else { 
+0A2C:  GOTO   230
+0A2D:  BCF    03.5
+.................... 			value = 0; 
+0A2E:  BSF    03.5
+0A2F:  CLRF   36
+.................... 		} 
+.................... 		OP = AuxInAOp; 
+0A30:  BCF    03.5
+0A31:  MOVF   42,W
+0A32:  BSF    03.5
+0A33:  MOVWF  31
+.................... 		AuxInTailChar = 10; // 'a' 
+0A34:  MOVLW  0A
+0A35:  MOVWF  23
+.................... 		ExecOP(OP,value); 
+0A36:  MOVF   31,W
+0A37:  MOVWF  37
+0A38:  MOVF   36,W
+0A39:  MOVWF  38
+0A3A:  BCF    0A.3
+0A3B:  BCF    03.5
+0A3C:  CALL   54B
+0A3D:  BSF    0A.3
+0A3E:  BSF    03.5
+.................... 	} // }}} 
+.................... 	// Process aux input 2 port {{{ 
+.................... 	if ( Inputs & 0x02 ) { 
+0A3F:  BTFSS  33.1
+0A40:  GOTO   25B
+.................... 		SET_AUX2_INPUT; 
+0A41:  BSF    06.4
+.................... 		if ( input(AUX2_INPUT_PIN)) { 
+0A42:  BCF    03.5
+0A43:  BTFSS  06.4
+0A44:  GOTO   24A
+.................... 			value = 1; 
+0A45:  MOVLW  01
+0A46:  BSF    03.5
+0A47:  MOVWF  36
+.................... 		} else { 
+0A48:  GOTO   24C
+0A49:  BCF    03.5
+.................... 			value = 0; 
+0A4A:  BSF    03.5
+0A4B:  CLRF   36
+.................... 		} 
+.................... 		OP = AuxInBOp; 
+0A4C:  BCF    03.5
+0A4D:  MOVF   43,W
+0A4E:  BSF    03.5
+0A4F:  MOVWF  31
+.................... 		AuxInTailChar = 11; // 'b' 
+0A50:  MOVLW  0B
+0A51:  MOVWF  23
+.................... 		ExecOP(OP,value); 
+0A52:  MOVF   31,W
+0A53:  MOVWF  37
+0A54:  MOVF   36,W
+0A55:  MOVWF  38
+0A56:  BCF    0A.3
+0A57:  BCF    03.5
+0A58:  CALL   54B
+0A59:  BSF    0A.3
+0A5A:  BSF    03.5
+.................... 	} // }}} 
+.................... 	// Process Temp control operator {{{ 
+.................... 	// Temp control overrides AuxInput 1 value when they 
+.................... 	// are both driving AuxOut1 
+.................... //	if ( AuxCfg & 0x04 ) {  
+.................... 	Temp40 = TempC + 40; 
+0A5B:  MOVLW  28
+0A5C:  ADDWF  2D,W
+0A5D:  MOVWF  32
+.................... 	if (TempC < -40) { 
+0A5E:  MOVF   2D,W
+0A5F:  XORLW  80
+0A60:  SUBLW  57
+0A61:  BTFSS  03.0
+0A62:  GOTO   265
+.................... 		TempC = -40 ; // Only support temperatures > -40degC 
+0A63:  MOVLW  D8
+0A64:  MOVWF  2D
+.................... 	} 
+.................... 	if ( Temp40 < TempLow) { 
+0A65:  BCF    03.5
+0A66:  MOVF   4D,W
+0A67:  BSF    03.5
+0A68:  SUBWF  32,W
+0A69:  BTFSC  03.0
+0A6A:  GOTO   27B
+.................... 		OP = TempLowOp; 
+0A6B:  BCF    03.5
+0A6C:  MOVF   3F,W
+0A6D:  BSF    03.5
+0A6E:  MOVWF  31
+.................... 		AuxInTailChar = 21; // 'l' 
+0A6F:  MOVLW  15
+0A70:  MOVWF  23
+.................... 		ExecOP(OP,1); 
+0A71:  MOVF   31,W
+0A72:  MOVWF  37
+0A73:  MOVLW  01
+0A74:  MOVWF  38
+0A75:  BCF    0A.3
+0A76:  BCF    03.5
+0A77:  CALL   54B
+0A78:  BSF    0A.3
+.................... 	} 
+.................... 	else if ( Temp40 > TempHigh ) { 
+0A79:  GOTO   29D
+0A7A:  BSF    03.5
+0A7B:  MOVF   32,W
+0A7C:  BCF    03.5
+0A7D:  SUBWF  4E,W
+0A7E:  BTFSC  03.0
+0A7F:  GOTO   28E
+.................... 		OP = TempHighOp; 
+0A80:  MOVF   40,W
+0A81:  BSF    03.5
+0A82:  MOVWF  31
+.................... 		AuxInTailChar = 17; // 'h' 
+0A83:  MOVLW  11
+0A84:  MOVWF  23
+.................... 		ExecOP(OP,1); 
+0A85:  MOVF   31,W
+0A86:  MOVWF  37
+0A87:  MOVLW  01
+0A88:  MOVWF  38
+0A89:  BCF    0A.3
+0A8A:  BCF    03.5
+0A8B:  CALL   54B
+0A8C:  BSF    0A.3
+.................... 	} 
+.................... 	else { 
+0A8D:  GOTO   29D
+.................... 		OP = TempNormOp; 
+0A8E:  MOVF   41,W
+0A8F:  BSF    03.5
+0A90:  MOVWF  31
+.................... 		if ( OP & 0x01 ) { // Only set the AuxInTailChar to 23 if the operator is MorseEcho 
+0A91:  BTFSS  31.0
+0A92:  GOTO   295
+.................... 			AuxInTailChar = 23; // 'n' 
+0A93:  MOVLW  17
+0A94:  MOVWF  23
+.................... 		} 
+.................... 		ExecOP(OP,1); // Value is always 1 (or true) for temp sensor 
+0A95:  MOVF   31,W
+0A96:  MOVWF  37
+0A97:  MOVLW  01
+0A98:  MOVWF  38
+0A99:  BCF    0A.3
+0A9A:  BCF    03.5
+0A9B:  CALL   54B
+0A9C:  BSF    0A.3
+.................... 	}	 
+.................... //	} // }}} 
+.................... 	// {{{ Update Aux outputs 
+.................... 	if ( Outputs & 0x01 ) { 
+0A9D:  BSF    03.5
+0A9E:  BTFSS  34.0
+0A9F:  GOTO   2AF
+.................... 		SET_AUX1_OUTPUT; 
+0AA0:  BCF    06.4
+.................... 		bitValue = (AuxOut & 0x01) != 0; 
+0AA1:  BCF    35.0
+0AA2:  MOVF   24,W
+0AA3:  ANDLW  01
+0AA4:  BTFSS  03.2
+0AA5:  BSF    35.0
+.................... 		output_bit(AUX0_PIN,bitValue); 
+0AA6:  BTFSC  35.0
+0AA7:  GOTO   2AC
+0AA8:  BCF    03.5
+0AA9:  BCF    06.4
+0AAA:  GOTO   2AE
+0AAB:  BSF    03.5
+0AAC:  BCF    03.5
+0AAD:  BSF    06.4
+0AAE:  BSF    03.5
+.................... 	} 
+.................... 	if ( Outputs & 0x02 ) { 
+0AAF:  BTFSS  34.1
+0AB0:  GOTO   2C0
+.................... 		SET_AUX2_OUTPUT; 
+0AB1:  BCF    05.5
+.................... 		bitValue = (AuxOut & 0x02) != 0; 
+0AB2:  BCF    35.0
+0AB3:  MOVF   24,W
+0AB4:  ANDLW  02
+0AB5:  BTFSS  03.2
+0AB6:  BSF    35.0
+.................... 		output_bit(AUX1_PIN,bitValue); 
+0AB7:  BTFSC  35.0
+0AB8:  GOTO   2BD
+0AB9:  BCF    03.5
+0ABA:  BCF    05.5
+0ABB:  GOTO   2BF
+0ABC:  BSF    03.5
+0ABD:  BCF    03.5
+0ABE:  BSF    05.5
+0ABF:  BSF    03.5
+.................... 	} 
+.................... 	// }}} 
+.................... }	// }}} 
+0AC0:  BCF    03.5
+0AC1:  BSF    0A.3
+0AC2:  GOTO   73E (RETURN)
+....................  
+.................... void ExecOP (int op,int value) { // {{{ 
+.................... 	bit SetEnable; 
+.................... 	int LocalOp; 
+.................... 	int LocalValue; 
+.................... 	 
+.................... 	LocalOp = op & 0x7F; 
+*
+054B:  BSF    03.5
+054C:  MOVF   37,W
+054D:  ANDLW  7F
+054E:  MOVWF  3A
+....................  
+.................... 	if ( op > 0x07 ) { 
+054F:  MOVF   37,W
+0550:  SUBLW  07
+0551:  BTFSC  03.0
+0552:  GOTO   55B
+....................     	// Invert the value 
+.................... 	    if ( value ) { 
+0553:  MOVF   38,F
+0554:  BTFSC  03.2
+0555:  GOTO   558
+....................         	LocalValue = 0; 
+0556:  CLRF   3B
+.................... 	    } else { 
+0557:  GOTO   55A
+.................... 	        LocalValue = 1; 
+0558:  MOVLW  01
+0559:  MOVWF  3B
+....................         }     
+.................... 	} else { 
+055A:  GOTO   55D
+.................... 	    // Preserve value 
+.................... 	    LocalValue = value; 
+055B:  MOVF   38,W
+055C:  MOVWF  3B
+.................... 	}     
+.................... 		 
+.................... 	// Op   Name 
+.................... 	// =============== 
+.................... 	// 00   NoOP 
+.................... 	// 01   Morse Echo 
+.................... 	// 02   AuxOut1 
+.................... 	// 03   AuxOut2 
+.................... 	// 04   Enable 
+.................... 	// 05   Radio1 
+.................... 	// 06   Radio2 
+.................... 	// 07   Radio3 
+.................... 	 
+.................... 	// When the OP is > 7, the value is inverted. 
+.................... 	// This is for the temperature sensor to invert the 
+.................... 	// operator value. 
+.................... 	 
+.................... 	SetEnable=0; 
+055D:  BCF    39.0
+.................... 	switch(LocalOp) { 
+055E:  MOVLW  01
+055F:  SUBWF  3A,W
+0560:  ADDLW  F8
+0561:  BTFSC  03.0
+0562:  GOTO   5BF
+0563:  ADDLW  08
+0564:  BCF    03.5
+0565:  GOTO   5C2
+.................... 		case(0x01): // Morse echo  
+.................... 			if ( LocalValue ) { 
+0566:  BSF    03.5
+0567:  MOVF   3B,F
+0568:  BTFSC  03.2
+0569:  GOTO   56D
+.................... 				AuxInTail = 1; 
+056A:  BCF    03.5
+056B:  BSF    6A.7
+056C:  BSF    03.5
+.................... 			} 
+.................... 			break; 
+056D:  GOTO   5BF
+.................... 		case(0x02): // Set AuxOut1 
+.................... 			if ( LocalValue ) { 
+056E:  BSF    03.5
+056F:  MOVF   3B,F
+0570:  BTFSC  03.2
+0571:  GOTO   574
+.................... 				AuxOut |= 0x01; 
+0572:  BSF    24.0
+.................... 			} else { 
+0573:  GOTO   575
+.................... 				AuxOut &= 0xFE; 
+0574:  BCF    24.0
+.................... 			} 
+.................... 			break; 
+0575:  GOTO   5BF
+.................... 		case(0x03): // Set AuxOut2 
+.................... 			if ( LocalValue ) { 
+0576:  BSF    03.5
+0577:  MOVF   3B,F
+0578:  BTFSC  03.2
+0579:  GOTO   57C
+.................... 					AuxOut |= 0x02; 
+057A:  BSF    24.1
+.................... 			} else { 
+057B:  GOTO   57D
+.................... 					AuxOut &= 0xFD; 
+057C:  BCF    24.1
+.................... 			} 
+.................... 			break; 
+057D:  GOTO   5BF
+.................... 		case(0x04): // Enable repeater 
+.................... 			if ( LocalValue ) { 
+057E:  BSF    03.5
+057F:  MOVF   3B,F
+0580:  BTFSC  03.2
+0581:  GOTO   591
+.................... 				Enable = (read_eeprom(GET_EEPROM_PTR(Enable))); 
+0582:  MOVLW  08
+0583:  BCF    03.5
+0584:  BSF    03.6
+0585:  MOVWF  0D
+0586:  BSF    03.5
+0587:  BCF    0C.7
+0588:  BSF    0C.0
+0589:  BCF    03.5
+058A:  MOVF   0C,W
+058B:  BCF    03.6
+058C:  MOVWF  37
+.................... 				LinkTimeoutTimer = LinkTimeout; 
+058D:  MOVF   3E,W
+058E:  BSF    03.5
+058F:  MOVWF  26
+.................... 			} else { 
+0590:  GOTO   594
+.................... 				Enable = 0x00; 
+0591:  BCF    03.5
+0592:  CLRF   37
+0593:  BSF    03.5
+.................... 			} 
+.................... 			break; 
+0594:  GOTO   5BF
+.................... 		case(0x05): // Enable Radio1 
+.................... 			if ( LocalValue ) { 
+0595:  BSF    03.5
+0596:  MOVF   3B,F
+0597:  BTFSC  03.2
+0598:  GOTO   59F
+.................... 				Enable |= 0x01; 
+0599:  BCF    03.5
+059A:  BSF    37.0
+.................... 				LinkTimeoutTimer = LinkTimeout; 
+059B:  MOVF   3E,W
+059C:  BSF    03.5
+059D:  MOVWF  26
+.................... 			} else { 
+059E:  GOTO   5A2
+.................... 				Enable &= 0xFE; // 1110 
+059F:  BCF    03.5
+05A0:  BCF    37.0
+05A1:  BSF    03.5
+.................... 			} 
+.................... 			break; 
+05A2:  GOTO   5BF
+.................... 		case(0x06): // Enable Radio2 
+.................... 			if ( LocalValue  ) { 
+05A3:  BSF    03.5
+05A4:  MOVF   3B,F
+05A5:  BTFSC  03.2
+05A6:  GOTO   5AB
+.................... 				Enable |= 0x02;  
+05A7:  BCF    03.5
+05A8:  BSF    37.1
+.................... 			} else { 
+05A9:  GOTO   5AD
+05AA:  BSF    03.5
+.................... 				Enable &= 0xFD; // 1101 
+05AB:  BCF    03.5
+05AC:  BCF    37.1
+.................... 			} 
+.................... 			break; 
+05AD:  BSF    03.5
+05AE:  GOTO   5BF
+.................... 		case(0x07): // Enable Radio3 
+.................... 			if ( LocalValue ) { 
+05AF:  BSF    03.5
+05B0:  MOVF   3B,F
+05B1:  BTFSC  03.2
+05B2:  GOTO   5B7
+.................... 				Enable |= 0x04; 
+05B3:  BCF    03.5
+05B4:  BSF    37.2
+.................... 			} else { 
+05B5:  GOTO   5B9
+05B6:  BSF    03.5
+.................... 				Enable &= 0xFB; // 1011 
+05B7:  BCF    03.5
+05B8:  BCF    37.2
+.................... 			} 
+.................... 			break; 
+05B9:  BSF    03.5
+05BA:  GOTO   5BF
+.................... 		case(0x08): // Emulate 1/2 delay --> Transmit morse ID 
+.................... 			TXMorseID=1; 
+05BB:  BSF    6A.1
+.................... 			break; 
+05BC:  BSF    03.5
+05BD:  GOTO   5BF
+05BE:  BSF    03.5
+.................... 	} 
+.................... 	restart_wdt(); 
+05BF:  CLRWDT
+.................... } // }}} 
+05C0:  BCF    03.5
+05C1:  RETLW  00
+....................  
+.................... void write_ee(int x,int val) { // {{{ 
+....................     write_eeprom(x,val); 
+*
+02FC:  BSF    03.5
+02FD:  MOVF   49,W
+02FE:  BCF    03.5
+02FF:  BSF    03.6
+0300:  MOVWF  0D
+0301:  BSF    03.5
+0302:  BCF    03.6
+0303:  MOVF   4A,W
+0304:  BCF    03.5
+0305:  BSF    03.6
+0306:  MOVWF  0C
+0307:  BSF    03.5
+0308:  BCF    0C.7
+0309:  BSF    0C.2
+030A:  BCF    03.5
+030B:  BCF    03.6
+030C:  MOVF   0B,W
+030D:  MOVWF  20
+030E:  BCF    0B.7
+030F:  BSF    03.5
+0310:  BSF    03.6
+0311:  MOVLW  55
+0312:  MOVWF  0D
+0313:  MOVLW  AA
+0314:  MOVWF  0D
+0315:  BSF    0C.1
+0316:  BTFSC  0C.1
+0317:  GOTO   316
+0318:  BCF    0C.2
+0319:  BCF    03.5
+031A:  BCF    03.6
+031B:  MOVF   20,W
+031C:  IORWF  0B,F
+.................... } // }}} 
+031D:  RETLW  00
+....................  
+.................... void morse_word_delay (void) { // {{{ 
+....................     delay_ms(DitDelay * 6 * MORSE_MULTIPLIER_ISR_OFF); 
+*
+07D2:  MOVF   3D,W
+07D3:  BSF    03.5
+07D4:  MOVWF  48
+07D5:  MOVLW  06
+07D6:  MOVWF  49
+07D7:  BCF    03.5
+07D8:  CALL   4ED
+07D9:  MOVF   21,W
+07DA:  BSF    03.5
+07DB:  MOVWF  48
+07DC:  MOVLW  0A
+07DD:  MOVWF  49
+07DE:  BCF    03.5
+07DF:  CALL   4ED
+07E0:  MOVF   21,W
+07E1:  BSF    03.5
+07E2:  MOVWF  3E
+07E3:  MOVWF  48
+07E4:  BCF    03.5
+07E5:  CALL   5EF
+.................... } // }}} 
+07E6:  RETLW  00
+
+Configuration Fuses:
+   Word  1: 33D4   INTRC_IO NOPROTECT BROWNOUT NOMCLR NOCPD NOWDT NOPUT NOIESO NOFCMEN

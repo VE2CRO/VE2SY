@@ -1,0 +1,5 @@
+>>> Warning 216 "PCB_PIC.c" Line 1408(0,1): Interrupts disabled during call to prevent re-entrancy:  (ptt)
+>>> Warning 216 "PCB_PIC.c" Line 1408(0,1): Interrupts disabled during call to prevent re-entrancy:  (ProcessCorInPort)
+>>> Warning 202 "C:\Project\RBL\PCB_PIC.h" Line 176(63,64): Variable never used:   RegCnt
+      Memory usage:   ROM=98%      RAM=45% - 57%
+      0 Errors,  3 Warnings.
